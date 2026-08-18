@@ -1,7 +1,7 @@
 {
   "name": "dsh-balance-widget",
   "description": "Balance & cost widget for the dsh web GUI: a corner icon in the conversation session header that shows the DeepSeek account balance and the current session's estimated spend on click. Host half proxies the official /user/balance API over ctx.webServer (loopback-only); client half renders the icon and popover. Zero external dependencies — works on Node 24.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "lib/index.js",
   "files": [
