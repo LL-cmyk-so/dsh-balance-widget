@@ -1,25 +1,8 @@
-# Dependencies
 node_modules/
-
-# Build output
 dist/
 build/
-*.tsbuildinfo
-
-# Logs
 *.log
-npm-debug.log*
-pnpm-debug.log*
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Editor
 .idea/
 .vscode/
-*.swp
-
-# Env / secrets
 .env
-.env.local
