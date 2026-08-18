@@ -2,14 +2,12 @@
 
 **中文** | [English](README.en.md)
 
-<p align="center">
-  <img src="https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm" alt="npm">
-  <img src="https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars" alt="Stars">
-  <img src="https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="Last commit">
-  <img src="https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square" alt="Node 24">
-  <img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="Zero deps">
-</p>
+[![npm](https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm)](https://www.npmjs.com/package/dsh-balance-widget)
+[![Stars](https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars)](https://github.com/LL-cmyk-so/dsh-balance-widget)
+[![License](https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square)](https://github.com/LL-cmyk-so/dsh-balance-widget/blob/main/LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square)](https://github.com/LL-cmyk-so/dsh-balance-widget)
+[![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
+[![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
 DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右上角（角落）渲染一个 💰 图标，点击弹出账户余额与本会话的估算成本。
 

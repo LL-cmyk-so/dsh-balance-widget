@@ -2,14 +2,12 @@
 
 [中文](README.md) | **English**
 
-<p align="center">
-  <img src="https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm" alt="npm">
-  <img src="https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars" alt="Stars">
-  <img src="https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="Last commit">
-  <img src="https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square" alt="Node 24">
-  <img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="Zero deps">
-</p>
+[![npm](https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm)](https://www.npmjs.com/package/dsh-balance-widget)
+[![Stars](https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars)](https://github.com/LL-cmyk-so/dsh-balance-widget)
+[![License](https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square)](https://github.com/LL-cmyk-so/dsh-balance-widget/blob/main/LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square)](https://github.com/LL-cmyk-so/dsh-balance-widget)
+[![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
+[![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
 A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a 💰 icon in the corner of the conversation session header. Click it to see your DeepSeek account balance and the current session's estimated spend.
 
