@@ -162,7 +162,7 @@ DSH 的插件配置统一放在这个文件里：
 
 - 配置树：`dsh --profile web --dump-config` 应出现 `balance-widget` 条目
 - 余额路由：重启 dsh web 后 `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` 应返回 `{ ok, balance_infos, modelId }`
-- 成本路由：`curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=<会话id>"` 与 `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` 应返回 `{ cost, inputTokens, outputTokens, modelId }`
+- 成本路由：`curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` 与 `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` 应返回 `{ cost, inputTokens, outputTokens, modelId }`
 
 ## License
 

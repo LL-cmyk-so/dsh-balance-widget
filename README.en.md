@@ -164,7 +164,7 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 - Config tree: `dsh --profile web --dump-config` should show a `balance-widget` entry.
 - Balance route: after restarting dsh web, `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` should return `{ ok, balance_infos, modelId }`.
-- Cost routes: `curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=<sessionId>"` and `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` should return `{ cost, inputTokens, outputTokens, modelId }`.
+- Cost routes: `curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` and `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` should return `{ cost, inputTokens, outputTokens, modelId }`.
 
 ## License
 
