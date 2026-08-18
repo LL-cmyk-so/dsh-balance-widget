@@ -70,17 +70,58 @@ dsh plugin --profile web add "link:$(pwd)"
 
 ## 配置
 
-在 `~/.dsh/profiles/web/cordis.patch.yml` 中：
+### 配置文件在哪
+
+DSH 的插件配置统一放在这个文件里：
+
+```
+~/.dsh/profiles/web/cordis.patch.yml
+```
+
+> `~` 是你的用户主目录（macOS 是 `/Users/你的用户名`）。
+
+### 全部配置项
+
+在 `cordis.patch.yml` 中追加以下内容（**只改你需要的那几行**，其余保持默认即可）：
 
 ```yaml
 - id: balance-widget
   name: dsh-balance-widget
   config:
-    balanceBaseURL: https://api.deepseek.com   # 官方余额接口
-    balanceApiKeyEnv: DEEPSEEK_API_KEY          # 凭据服务中的密钥 ref
-    requestTimeoutMs: 5000                      # 余额查询超时
+    balanceBaseURL: https://api.deepseek.com   # 官方余额接口（一般不用改）
+    balanceApiKeyEnv: DEEPSEEK_API_KEY          # 凭据服务中的密钥 ref（一般不用改）
+    requestTimeoutMs: 5000                      # 余额查询超时（毫秒）
     modelId: deepseek-v4-flash                  # 成本计价模型（可改 deepseek-v4-pro）
+    lowThreshold: 5                             # 余额低于此值（¥）图标变黄提醒
+    criticalThreshold: 1                        # 余额低于此值（¥）图标变红警告
 ```
+
+### 示例：调整余额预警阈值
+
+默认余额 **低于 ¥5 变黄、低于 ¥1 变红**。想改成"低于 ¥10 提醒、低于 ¥3 警告"：
+
+```yaml
+- id: balance-widget
+  name: dsh-balance-widget
+  config:
+    lowThreshold: 10
+    criticalThreshold: 3
+```
+
+改完**重启 `dsh web`** 生效。
+
+### 示例：成本按 V4-Pro 计价
+
+如果主要使用 DeepSeek-V4-Pro 模型，把计价模型改掉，成本估算更准：
+
+```yaml
+- id: balance-widget
+  name: dsh-balance-widget
+  config:
+    modelId: deepseek-v4-pro
+```
+
+> **提示**：`cordis.patch.yml` 可能有其他插件的配置行，追加时注意**不要改动已有的行**，只加新内容。
 
 ## 定价说明
 

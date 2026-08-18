@@ -74,17 +74,56 @@ Then restart `dsh web`.
 
 ## Configuration
 
-In `~/.dsh/profiles/web/cordis.patch.yml`:
+### Where the config file lives
+
+DSH plugin configuration lives in:
+
+```
+~/.dsh/profiles/web/cordis.patch.yml
+```
+
+### All options
+
+Append to `cordis.patch.yml` (only change the lines you need; the rest stay at defaults):
 
 ```yaml
 - id: balance-widget
   name: dsh-balance-widget
   config:
-    balanceBaseURL: https://api.deepseek.com   # official balance endpoint
-    balanceApiKeyEnv: DEEPSEEK_API_KEY          # credential ref for the API key
-    requestTimeoutMs: 5000                      # balance request timeout
+    balanceBaseURL: https://api.deepseek.com   # official balance endpoint (rarely changed)
+    balanceApiKeyEnv: DEEPSEEK_API_KEY          # credential ref for the API key (rarely changed)
+    requestTimeoutMs: 5000                      # balance request timeout (ms)
     modelId: deepseek-v4-flash                  # pricing model (or deepseek-v4-pro)
+    lowThreshold: 5                             # balance below this (¥) turns the icon amber
+    criticalThreshold: 1                        # balance below this (¥) turns the icon red
 ```
+
+### Example: custom balance thresholds
+
+By default the icon turns **amber below ¥5 and red below ¥1**. To warn at ¥10 / ¥3 instead:
+
+```yaml
+- id: balance-widget
+  name: dsh-balance-widget
+  config:
+    lowThreshold: 10
+    criticalThreshold: 3
+```
+
+Restart `dsh web` for changes to take effect.
+
+### Example: price with V4-Pro
+
+If you mainly use DeepSeek-V4-Pro, point the pricing model at it for a more accurate estimate:
+
+```yaml
+- id: balance-widget
+  name: dsh-balance-widget
+  config:
+    modelId: deepseek-v4-pro
+```
+
+> **Note**: `cordis.patch.yml` may already contain lines for other plugins — append new lines without touching existing ones.
 
 ## Pricing
 
