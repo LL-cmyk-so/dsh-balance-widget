@@ -3,6 +3,7 @@
 **中文** | [English](README.en.md)
 
 <p align="center">
+  <img src="https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm" alt="npm">
   <img src="https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars" alt="Stars">
   <img src="https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="License">
   <img src="https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="Last commit">
