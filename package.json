@@ -1,7 +1,7 @@
 {
   "name": "dsh-balance-widget",
   "description": "Balance & cost widget for the dsh web GUI: a sidebar footer card shows the DeepSeek account balance, a remaining-ratio bar and today's costs; clicking opens a popover with four-tier cost breakdown (last prompt / this session / today-this-project / today-all), term explanations, and a one-click top-up link. Zero external dependencies — works on Node 24.",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "main": "lib/index.js",
   "files": [
