@@ -41,7 +41,7 @@ dsh plugin --profile web add dsh-balance-widget
 From GitHub (development):
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/dsh-balance-widget.git
+git clone https://github.com/LL-cmyk-so/dsh-balance-widget.git
 cd dsh-balance-widget
 dsh plugin --profile web add "link:$(pwd)"
 ```

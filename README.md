@@ -37,7 +37,7 @@ dsh plugin --profile web add dsh-balance-widget
 GitHub 仓库安装（开发调试）：
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/dsh-balance-widget.git
+git clone https://github.com/LL-cmyk-so/dsh-balance-widget.git
 cd dsh-balance-widget
 dsh plugin --profile web add "link:$(pwd)"
 ```
