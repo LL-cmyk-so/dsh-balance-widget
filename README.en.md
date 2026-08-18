@@ -31,7 +31,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 - **Last prompt cost (estimate)** — Parses the current session file and prices the last turn's token usage, answering "how much did that last prompt cost".
 - **Today total cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
-- **One-click top-up** — a "⚡ Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
+- **One-click top-up** — a "Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
 - **On-demand refresh** — No polling, no background requests; endpoints are only hit when you click the icon. Costs zero tokens to use.
 
 ## Why this plugin

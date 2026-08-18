@@ -31,7 +31,7 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右�
 - **最近一次提问成本（估算）** — 从当前会话文件解析最后一个 turn 的 token 用量 × 单价，回答"刚才那条提问花了多少"。
 - **今天总成本（估算）** — 遍历 `~/.dsh/sessions/` 下所有会话，累加今天（自然日）的 token 用量 × 单价。
 - **Token 用量** — 同时展示本会话输入（含缓存命中）/ 输出 token 数。
-- **一键充值** — 弹层底部「⚡ 去充值」链接直达 DeepSeek 官方充值页（platform.deepseek.com/top_up），新窗口打开。
+- **一键充值** — 弹层底部「去充值」链接直达 DeepSeek 官方充值页（platform.deepseek.com/top_up），新窗口打开。
 - **按需刷新** — 无轮询、无后台请求；只有点击图标时才发起查询，不消耗任何 token。
 
 ## 架构
