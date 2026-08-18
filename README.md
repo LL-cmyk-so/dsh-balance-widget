@@ -11,6 +11,12 @@
 
 DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右上角（角落）渲染一个 💰 图标，点击弹出账户余额与本会话的估算成本。
 
+## 效果预览
+
+| 余额常驻右上角 | 点击弹出详情 |
+| --- | --- |
+| ![余额常驻](docs/screenshot-corner.png) | ![弹框详情](docs/screenshot-popover.png) |
+
 ## 与同类插件的区别
 
 | 特点 | 本插件 | 同类插件（dsh-balance / dsh-token-price 等） |

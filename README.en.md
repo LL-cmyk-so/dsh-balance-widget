@@ -11,6 +11,12 @@
 
 A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a 💰 icon in the corner of the conversation session header. Click it to see your DeepSeek account balance and the current session's estimated spend.
 
+## Preview
+
+| Balance always visible | Popover on click |
+| --- | --- |
+| ![Balance corner](docs/screenshot-corner.png) | ![Popover detail](docs/screenshot-popover.png) |
+
 ## How it differs from similar plugins
 
 | Aspect | This plugin | Others (dsh-balance / dsh-token-price / ...) |
