@@ -9,13 +9,13 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右上角（角落）渲染一个 💰 图标，点击弹出账户余额与本会话的估算成本。
+DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常驻卡片显示账户余额与剩余比例条，点击弹出四层级成本明细（最近提问 / 本会话 / 今日·本项目 / 今日·全部）。
 
 ## 效果预览
 
-| 余额常驻右上角 | 点击弹出详情 |
+| 侧边栏常驻卡片 | 点击弹出四层级成本 |
 | --- | --- |
-| ![余额常驻](docs/screenshot-corner.png) | ![弹框详情](docs/screenshot-popover.png) |
+| ![侧边栏卡片](docs/screenshot-corner.png) | ![成本明细弹框](docs/screenshot-popover.png) |
 
 ## 与同类插件的区别
 
@@ -49,15 +49,16 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右�
 ```
 host 半区 (lib/index.js)
   ctx.webServer.register:
-    GET /api/dsh-balance/balance    → 官方 /user/balance（loopback-only 守卫）
-    GET /api/dsh-balance/last-cost  → 当前会话最近一次提问成本（读会话文件 + zstd 解压）
-    GET /api/dsh-balance/today-cost → 今天所有会话总成本
+    GET /api/dsh-balance/balance     → 官方 /user/balance（loopback-only 守卫）
+    GET /api/dsh-balance/active-cost → 最近活跃会话的最近提问 + 会话总计
+    GET /api/dsh-balance/today-cost  → 今日成本（双值：当前工作区 + 全部）
   依赖：零外部 @deepseek-ai/* import，任何 profile 布局均可解析
+  另有 deepseek_billing 工具供模型直接查询余额/成本
 
 client 半区 (lib/client.js)
-  ctx.slots.inject("conversation.session.header.utilities")
-    → 💰 图标（会话头部右上角）
-    → 点击 fetch 同源 API → 弹层展示余额 + 三种成本 + token
+  ctx.slots.inject("sidebar.footer.action")
+    → 侧边栏底部常驻卡片（余额 + 比例条 + 今日）
+    → 点击弹出四层级成本明细 + ⓘ 名词解释
 ```
 
 ## 安装

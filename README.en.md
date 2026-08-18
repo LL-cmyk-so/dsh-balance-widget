@@ -9,13 +9,13 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a 💰 icon in the corner of the conversation session header. Click it to see your DeepSeek account balance and the current session's estimated spend.
+A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a persistent sidebar footer card shows the account balance and a remaining-ratio bar; clicking opens a four-tier cost breakdown (last prompt / this session / today-this-project / today-all).
 
 ## Preview
 
-| Balance always visible | Popover on click |
+| Sidebar card | Four-tier cost popover |
 | --- | --- |
-| ![Balance corner](docs/screenshot-corner.png) | ![Popover detail](docs/screenshot-popover.png) |
+| ![Sidebar card](docs/screenshot-corner.png) | ![Cost popover](docs/screenshot-popover.png) |
 
 ## How it differs from similar plugins
 
@@ -54,14 +54,16 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 ```
 host half (lib/index.js)
   ctx.webServer.register:
-    GET /api/dsh-balance/balance    → official /user/balance (loopback-only guard)
-    GET /api/dsh-balance/last-cost  → last prompt cost (session file + zstd decode)
-    GET /api/dsh-balance/today-cost → today's total across all sessions
+    GET /api/dsh-balance/balance     → official /user/balance (loopback-only guard)
+    GET /api/dsh-balance/active-cost → last prompt + session total (most recent session)
+    GET /api/dsh-balance/today-cost  → today's costs (dual: current workspace + all)
+  Zero @deepseek-ai/* imports; loads from any profile layout.
+  Also registers a deepseek_billing tool for model-driven queries.
 
 client half (lib/client.js)
-  ctx.slots.inject("conversation.session.header.utilities")
-    → 💰 icon (session header, top-right corner)
-    → click fetches same-origin APIs → popover with balance + three costs + tokens
+  ctx.slots.inject("sidebar.footer.action")
+    → persistent sidebar footer card (balance + ratio bar + today)
+    → click opens four-tier cost popover + ⓘ term explanations
 ```
 
 ## Installation
