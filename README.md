@@ -2,7 +2,28 @@
 
 **中文** | [English](README.en.md)
 
+<p align="center">
+  <img src="https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars" alt="Stars">
+  <img src="https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="Last commit">
+  <img src="https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square" alt="Node 24">
+  <img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="Zero deps">
+</p>
+
 DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右上角（角落）渲染一个 💰 图标，点击弹出账户余额与本会话的估算成本。
+
+## 与同类插件的区别
+
+| 特点 | 本插件 | 同类插件（dsh-balance / dsh-token-price 等） |
+| --- | --- | --- |
+| **零外部依赖** | ✅ 不 import 任何 `@deepseek-ai/*` 包，无原生模块 | ❌ 多数依赖 dsh SDK 包 |
+| **Node 24 兼容** | ✅ 天然兼容（零依赖设计），任何 profile 布局可加载 | ⚠️ 不少社区插件在 Node 24 下报错 |
+| **启动稳定性** | ✅ 用官方 `ctx.webServer` 注册路由，不与 apiproxy 冲突 | ⚠️ 有的自建 HTTP 服务导致 dsh web 启动崩溃 |
+| **按需查询** | ✅ 点击才查余额，无轮询、零后台请求 | 有的常驻徽章定时刷新 |
+| **峰谷定价** | ✅ 内置官方 2026-08-17 峰谷价表，自动按时段切换 | 部分支持 |
+| **安全性** | ✅ API key 仅在宿主进程，loopback-only 守卫 | 参差不齐 |
+
+**一句话**：*零依赖、Node 24 就绪、永不拖垮 dsh web 启动的余额/成本小部件。*
 
 ## 功能
 

@@ -2,7 +2,28 @@
 
 [中文](README.md) | **English**
 
+<p align="center">
+  <img src="https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars" alt="Stars">
+  <img src="https://img.shields.io/github/license/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/last-commit/LL-cmyk-so/dsh-balance-widget?style=flat-square" alt="Last commit">
+  <img src="https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square" alt="Node 24">
+  <img src="https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square" alt="Zero deps">
+</p>
+
 A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a 💰 icon in the corner of the conversation session header. Click it to see your DeepSeek account balance and the current session's estimated spend.
+
+## How it differs from similar plugins
+
+| Aspect | This plugin | Others (dsh-balance / dsh-token-price / ...) |
+| --- | --- | --- |
+| **Zero external dependencies** | ✅ Imports no `@deepseek-ai/*` packages, no native modules | ❌ Most depend on dsh SDK packages |
+| **Node 24 ready** | ✅ Works out of the box on any profile layout | ⚠️ Many community plugins still error on Node 24 |
+| **Boot stability** | ✅ Registers routes via official `ctx.webServer`; never conflicts with apiproxy | ⚠️ Some self-host HTTP servers that crash `dsh web` on boot |
+| **On-demand queries** | ✅ Fetches balance only on click; no polling, zero background requests | Some always-on badges refresh on a timer |
+| **Peak/off-peak pricing** | ✅ Built-in official 2026-08-17 rate table, auto-switches by window | Partial support |
+| **Security** | ✅ API key stays in the host process; loopback-only guard | Varies |
+
+**In one line**: *The zero-dependency, Node 24-ready balance/cost widget that never breaks `dsh web` boot.*
 
 ## Features
 
