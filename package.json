@@ -1,0 +1,53 @@
+{
+  "name": "dsh-balance-widget",
+  "description": "Balance & cost widget for the dsh web GUI: a corner icon in the conversation session header that shows the DeepSeek account balance and the current session's estimated spend on click. Host half proxies the official /user/balance API over ctx.webServer (loopback-only); client half renders the icon and popover. Zero external dependencies — works on Node 24.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md"
+  ],
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "keywords": [
+    "deepseek",
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "balance",
+    "cost",
+    "token",
+    "web-ui"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/dsh-balance-widget.git"
+  },
+  "author": "YOUR_NAME <YOUR_EMAIL>"
+}
