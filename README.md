@@ -96,6 +96,18 @@ dsh plugin --profile web add "link:$(pwd)"
 
 `deepseek-chat` / `deepseek-reasoner` 别名分别映射到 Flash / Pro 价格。成本为**估算值**，实际以官方账单为准。
 
+## 版本历史
+
+### v0.2.0 — 最近一次提问与今日总成本
+- ✨ **新增**：弹层增加「最近一次提问成本」与「今天总成本」两项
+  - 最近一次提问：解析当前会话最后一个 turn 的 token 用量 × 单价
+  - 今天总成本：遍历 `~/.dsh/sessions/` 下所有会话，累加今天（自然日）用量
+- 🐛 **修复**：last-cost 路由的 session-id 前缀重复问题（带/不带 `session-` 前缀均可解析）
+
+### v0.1.0 — 初始版本
+- 🎉 账户余额（官方 `/user/balance`）+ 本会话成本（估算）+ Token 用量
+- 按需刷新：无轮询，点击才查询，不消耗 token
+
 ## 验证
 
 - 配置树：`dsh --profile web --dump-config` 应出现 `balance-widget` 条目

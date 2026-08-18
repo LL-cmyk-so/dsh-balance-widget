@@ -100,6 +100,18 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 `deepseek-chat` / `deepseek-reasoner` aliases map to Flash / Pro pricing respectively. Costs are **estimates**; actual billing from the provider is authoritative.
 
+## Changelog
+
+### v0.2.0 — Last prompt & today total cost
+- ✨ **Added**: popover now shows "last prompt cost" and "today total cost"
+  - Last prompt: prices the current session's last turn from the session file
+  - Today total: walks every session under `~/.dsh/sessions/` and sums today's usage
+- 🐛 **Fixed**: session-id prefix duplication in the last-cost route (both `session-`-prefixed and bare ids resolve)
+
+### v0.1.0 — Initial release
+- 🎉 Account balance (official `/user/balance`) + session cost (estimate) + token usage
+- On-demand refresh: no polling, queries only on click, costs zero tokens
+
 ## Verify
 
 - Config tree: `dsh --profile web --dump-config` should show a `balance-widget` entry.
