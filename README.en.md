@@ -30,8 +30,10 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 
 - **Account balance** — On click, the host proxies DeepSeek's official `GET /user/balance` and shows the `¥` balance. The API key is resolved through the host credentials service and never leaves the host process; the browser only talks to same-origin routes.
 - **Session cost (estimate)** — Computed from the session's `tokenUsage` projection × DeepSeek's official peak/off-peak price table. Follows the configured model (default `deepseek-v4-flash`, switchable to `deepseek-v4-pro`) and the Beijing-time peak/off-peak windows automatically.
+- **Last prompt cost (estimate)** — Parses the current session file and prices the last turn's token usage, answering "how much did that last prompt cost".
+- **Today total cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
-- **On-demand refresh** — No polling, no background requests; the balance endpoint is only hit when you click the icon. Costs zero tokens to use.
+- **On-demand refresh** — No polling, no background requests; endpoints are only hit when you click the icon. Costs zero tokens to use.
 
 ## Why this plugin
 
@@ -43,13 +45,14 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 ```
 host half (lib/index.js)
   ctx.webServer.register:
-    GET /api/dsh-balance/balance → official /user/balance (loopback-only guard)
-    GET /api/dsh-balance/cost    → reserved route (cost priced client-side)
+    GET /api/dsh-balance/balance    → official /user/balance (loopback-only guard)
+    GET /api/dsh-balance/last-cost  → last prompt cost (session file + zstd decode)
+    GET /api/dsh-balance/today-cost → today's total across all sessions
 
 client half (lib/client.js)
   ctx.slots.inject("conversation.session.header.utilities")
     → 💰 icon (session header, top-right corner)
-    → click fetches same-origin /api/dsh-balance/balance → popover with balance + cost + tokens
+    → click fetches same-origin APIs → popover with balance + three costs + tokens
 ```
 
 ## Installation
@@ -101,6 +104,7 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 - Config tree: `dsh --profile web --dump-config` should show a `balance-widget` entry.
 - Balance route: after restarting dsh web, `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` should return `{ ok, balance_infos, modelId }`.
+- Cost routes: `curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=<sessionId>"` and `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` should return `{ cost, inputTokens, outputTokens, modelId }`.
 
 ## License
 

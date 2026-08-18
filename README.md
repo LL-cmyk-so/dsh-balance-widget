@@ -30,22 +30,25 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：在会话头部右�
 
 - **账户余额** — 点击图标时经宿主代理查询 DeepSeek 官方 `GET /user/balance`，展示 `¥` 余额；API key 只在宿主进程内读取（凭据服务），浏览器不接触密钥。
 - **本会话成本（估算）** — 由会话的 `tokenUsage` 投影 × DeepSeek 官方峰谷定价表计算，随当前会话模型（默认 `deepseek-v4-flash`，可在配置中改为 `deepseek-v4-pro`）与北京时间高峰/空闲时段自动切换。
+- **最近一次提问成本（估算）** — 从当前会话文件解析最后一个 turn 的 token 用量 × 单价，回答"刚才那条提问花了多少"。
+- **今天总成本（估算）** — 遍历 `~/.dsh/sessions/` 下所有会话，累加今天（自然日）的 token 用量 × 单价。
 - **Token 用量** — 同时展示本会话输入（含缓存命中）/ 输出 token 数。
-- **按需刷新** — 无轮询、无后台请求；只有点击图标时才发起余额查询，不消耗任何 token。
+- **按需刷新** — 无轮询、无后台请求；只有点击图标时才发起查询，不消耗任何 token。
 
 ## 架构
 
 ```
 host 半区 (lib/index.js)
   ctx.webServer.register:
-    GET /api/dsh-balance/balance → 官方 /user/balance（loopback-only 守卫）
-    GET /api/dsh-balance/cost    → 保留路由（成本目前客户端计价）
+    GET /api/dsh-balance/balance    → 官方 /user/balance（loopback-only 守卫）
+    GET /api/dsh-balance/last-cost  → 当前会话最近一次提问成本（读会话文件 + zstd 解压）
+    GET /api/dsh-balance/today-cost → 今天所有会话总成本
   依赖：零外部 @deepseek-ai/* import，任何 profile 布局均可解析
 
 client 半区 (lib/client.js)
   ctx.slots.inject("conversation.session.header.utilities")
     → 💰 图标（会话头部右上角）
-    → 点击 fetch 同源 /api/dsh-balance/balance → 弹层展示余额 + 成本 + token
+    → 点击 fetch 同源 API → 弹层展示余额 + 三种成本 + token
 ```
 
 ## 安装
@@ -97,6 +100,7 @@ dsh plugin --profile web add "link:$(pwd)"
 
 - 配置树：`dsh --profile web --dump-config` 应出现 `balance-widget` 条目
 - 余额路由：重启 dsh web 后 `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` 应返回 `{ ok, balance_infos, modelId }`
+- 成本路由：`curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=<会话id>"` 与 `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` 应返回 `{ cost, inputTokens, outputTokens, modelId }`
 
 ## License
 
