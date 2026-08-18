@@ -123,7 +123,7 @@ If you mainly use DeepSeek-V4-Pro, point the pricing model at it for a more accu
     modelId: deepseek-v4-pro
 ```
 
-> **Note**: `cordis.patch.yml` may already contain lines for other plugins — append new lines without touching existing ones.
+**Note**: `cordis.patch.yml` may already contain lines for other plugins — append new lines without touching existing ones.
 
 ## Pricing
 
