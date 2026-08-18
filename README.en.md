@@ -38,6 +38,10 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 - **Today total cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
 - **One-click top-up** — a "Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
+- **Sidebar card** — a persistent card at the sidebar footer shows balance, a remaining-ratio bar, and today's total; globally visible, refreshes every 60s.
+- **Remaining-ratio bar** — blue (healthy) → amber (below lowThreshold) → red (below criticalThreshold).
+- **Official price auto-sync** — fetches the DeepSeek official pricing page on startup and every 12h; falls back to built-in rates on failure.
+- **Agent tool** — a `deepseek_billing` tool lets the model answer "how much balance do I have / how much did today cost".
 - **On-demand refresh** — No polling, no background requests; endpoints are only hit when you click the icon. Costs zero tokens to use.
 
 ## Why this plugin
