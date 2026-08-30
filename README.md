@@ -9,11 +9,11 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常驻卡片显示账户余额与剩余比例条，点击弹出四层级成本明细（最近提问 / 本会话 / 今日·本项目 / 今日·全部）。
+DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常驻卡片显示账户余额与今日花费，点击弹出五层级成本明细（余额 / 最近提问·标注会话名 / 今日·本会话 / 今日·本工作区 / 今日·所有工作区）。
 
 ## 效果预览
 
-| 侧边栏卡片（左下角常驻） | 点击弹出四层级成本 |
+| 侧边栏卡片（左下角常驻） | 点击弹出五层级成本 |
 | --- | --- |
 | ![侧边栏卡片](docs/screenshot-corner.png) | ![成本明细弹框](docs/screenshot-popover.png) |
 
@@ -32,14 +32,16 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 
 ## 功能
 
-- **账户余额** — 点击图标时经宿主代理查询 DeepSeek 官方 `GET /user/balance`，展示 `¥` 余额；API key 只在宿主进程内读取（凭据服务），浏览器不接触密钥。
-- **本会话成本（估算）** — 由会话的 `tokenUsage` 投影 × DeepSeek 官方峰谷定价表计算，随当前会话模型（默认 `deepseek-v4-flash`，可在配置中改为 `deepseek-v4-pro`）与北京时间高峰/空闲时段自动切换。
-- **最近一次提问成本（估算）** — 从当前会话文件解析最后一个 turn 的 token 用量 × 单价，回答"刚才那条提问花了多少"。
-- **今天总成本（估算）** — 遍历 `~/.dsh/sessions/` 下所有会话，累加今天（自然日）的 token 用量 × 单价。
-- **Token 用量** — 同时展示本会话输入（含缓存命中）/ 输出 token 数。
+- **账户余额** — 点击图标时经宿主代理查询 DeepSeek 官方 `GET /user/balance`，展示 `¥` 余额；余额数字按阈值自动变色（充足 / 低于 `lowThreshold` 变黄 / 低于 `criticalThreshold` 变红）；API key 只在宿主进程内读取（凭据服务），浏览器不接触密钥。
+- **最近一次提问成本（估算）** — 从最近活跃会话文件解析最后一个 turn 的 token 用量 × 单价，回答"刚才那条提问花了多少"；下方标注该会话的**会话名**。
+- **今日·本会话成本（估算）** — 当前会话今天（自然日）产生的 token 用量 × DeepSeek 官方峰谷定价表计算，随当前会话模型（默认 `deepseek-v4-flash`，可在配置中改为 `deepseek-v4-pro`）与北京时间高峰/空闲时段自动切换。
+- **今日·本工作区成本（估算）** — 遍历当前工作区（由当前会话锚定）下的所有会话，累加今天的 token 用量 × 单价。
+- **今日·所有工作区成本（估算）** — 遍历 `~/.dsh/sessions/` 下所有工作区的所有会话，累加今天的 token 用量 × 单价。
+- **峰谷状态标签** — 卡片与弹框边框按当前时段着色（峰时橙色 / 谷时绿色），弹框标题旁显示「峰时/谷时」标签，悬停可查看当前价格档位（输入/输出单价）。
+- **Token 用量** — 同时展示输入（含缓存命中）/ 输出 token 数。
 - **一键充值** — 弹层底部「去充值」链接直达 DeepSeek 官方充值页（platform.deepseek.com/top_up），新窗口打开。
-- **侧边栏常驻卡片** — 侧边栏底部（设置上方）显示余额 + 剩余比例条 + 今日花费，全局可见，60 秒自动刷新。
-- **余额剩余比例条** — 蓝色（充足）→ 琥珀（低于 lowThreshold）→ 红色（低于 criticalThreshold）三档。
+- **侧边栏常驻卡片** — 侧边栏底部（设置上方）显示余额 + 今日花费，全局可见，60 秒自动刷新。
+- **余额数字变色预警** — 余额数字按三档着色：充足（默认色）→ 琥珀（低于 `lowThreshold`）→ 红色（低于 `criticalThreshold`），一眼判断余额健康度。
 - **官方价格自动同步** — 启动时 + 每 12 小时抓取 DeepSeek 官方定价页，改价自动跟进；失败回退内置价目表。
 - **模型工具查询** — 新增 `deepseek_billing` 工具，可直接问模型"余额多少/今天花了多少"。
 - **按需刷新** — 无轮询、无后台请求；只有点击图标时才发起查询，不消耗任何 token。
@@ -50,15 +52,15 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 host 半区 (lib/index.js)
   ctx.webServer.register:
     GET /api/dsh-balance/balance     → 官方 /user/balance（loopback-only 守卫）
-    GET /api/dsh-balance/active-cost → 最近活跃会话的最近提问 + 会话总计
-    GET /api/dsh-balance/today-cost  → 今日成本（双值：当前工作区 + 全部）
+    GET /api/dsh-balance/active-cost → 最近活跃会话的最近提问 + 今日·本会话（含会话名）
+    GET /api/dsh-balance/today-cost  → 今日成本（双值：当前工作区 + 所有工作区）
   依赖：零外部 @deepseek-ai/* import，任何 profile 布局均可解析
   另有 deepseek_billing 工具供模型直接查询余额/成本
 
 client 半区 (lib/client.js)
   ctx.slots.inject("sidebar.footer.action")
-    → 侧边栏底部常驻卡片（余额 + 比例条 + 今日）
-    → 点击弹出四层级成本明细 + ⓘ 名词解释
+    → 侧边栏底部常驻卡片（余额 + 今日花费，峰/谷时段描边着色）
+    → 点击弹出五层级成本明细 + 峰谷标签 + ⓘ 名词解释
 ```
 
 ## 安装
@@ -148,6 +150,14 @@ DSH 的插件配置统一放在这个文件里：
 `deepseek-chat` / `deepseek-reasoner` 别名分别映射到 Flash / Pro 价格。成本为**估算值**，实际以官方账单为准。
 
 ## 版本历史
+
+### v0.5.0 — 五层级成本与峰谷状态
+- ✨ **新增**：成本明细改为五层级——余额 / 最近一次提问 / 今日·本会话 / 今日·本工作区 / 今日·所有工作区
+  - 最近一次提问下方标注**会话名**（基于最近活跃会话）
+  - 「今日·本会话」= 当前会话今天产生的费用；「今日·本工作区」= 当前工作区今天所有会话合计（由当前会话锚定工作区）；「今日·所有工作区」= 全部工作区今天合计
+- ✨ **新增**：峰/谷时段状态可视化——卡片与弹框边框按时段着色（峰时橙色 / 谷时绿色），弹框标题旁显示「峰时/谷时」标签，悬停查看当前价格档位
+- 🎨 **调整**：移除余额剩余比例条，改为余额数字按阈值直接变色（充足 / 黄 / 红）
+- 🗑️ **移除**：弹框中的「本会话成本」（会话全程累计）行
 
 ### v0.2.0 — 最近一次提问与今日总成本
 - ✨ **新增**：弹层增加「最近一次提问成本」与「今天总成本」两项

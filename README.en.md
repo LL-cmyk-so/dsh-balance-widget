@@ -9,11 +9,11 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a persistent sidebar footer card shows the account balance and a remaining-ratio bar; clicking opens a four-tier cost breakdown (last prompt / this session / today-this-project / today-all).
+A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a persistent sidebar footer card shows the account balance and today's cost; clicking opens a five-tier cost breakdown (balance / last prompt with its session name / today-this-session / today-this-workspace / today-all-workspaces).
 
 ## Preview
 
-| Sidebar card | Four-tier cost popover |
+| Sidebar card | Five-tier cost popover |
 | --- | --- |
 | ![Sidebar card](docs/screenshot-corner.png) | ![Cost popover](docs/screenshot-popover.png) |
 
@@ -32,14 +32,16 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 
 ## Features
 
-- **Account balance** — On click, the host proxies DeepSeek's official `GET /user/balance` and shows the `¥` balance. The API key is resolved through the host credentials service and never leaves the host process; the browser only talks to same-origin routes.
-- **Session cost (estimate)** — Computed from the session's `tokenUsage` projection × DeepSeek's official peak/off-peak price table. Follows the configured model (default `deepseek-v4-flash`, switchable to `deepseek-v4-pro`) and the Beijing-time peak/off-peak windows automatically.
-- **Last prompt cost (estimate)** — Parses the current session file and prices the last turn's token usage, answering "how much did that last prompt cost".
-- **Today total cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
+- **Account balance** — On click, the host proxies DeepSeek's official `GET /user/balance` and shows the `¥` balance; the balance number is color-coded by threshold (healthy / amber below `lowThreshold` / red below `criticalThreshold`). The API key is resolved through the host credentials service and never leaves the host process; the browser only talks to same-origin routes.
+- **Last prompt cost (estimate)** — Parses the most recent session file and prices the last turn's token usage, answering "how much did that last prompt cost", with the **session name** labeled underneath.
+- **Today · this session cost (estimate)** — The current session's usage today (calendar day) × DeepSeek's official peak/off-peak price table. Follows the configured model (default `deepseek-v4-flash`, switchable to `deepseek-v4-pro`) and the Beijing-time peak/off-peak windows automatically.
+- **Today · this workspace cost (estimate)** — Sums today's token usage × price across every session in the current workspace (anchored by the current session).
+- **Today · all workspaces cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
+- **Peak/off-peak status** — The card and popover borders are tinted by the current window (orange at peak / green at off-peak), a "Peak/Off-peak" tag sits next to the popover title, and hovering it shows the current price tier (input/output per 1M tokens).
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
 - **One-click top-up** — a "Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
-- **Sidebar card** — a persistent card at the sidebar footer shows balance, a remaining-ratio bar, and today's total; globally visible, refreshes every 60s.
-- **Remaining-ratio bar** — blue (healthy) → amber (below lowThreshold) → red (below criticalThreshold).
+- **Sidebar card** — a persistent card at the sidebar footer shows balance and today's cost; globally visible, refreshes every 60s.
+- **Balance color warning** — the balance number is tinted in three tiers: default (healthy) → amber (below `lowThreshold`) → red (below `criticalThreshold`).
 - **Official price auto-sync** — fetches the DeepSeek official pricing page on startup and every 12h; falls back to built-in rates on failure.
 - **Agent tool** — a `deepseek_billing` tool lets the model answer "how much balance do I have / how much did today cost".
 - **On-demand refresh** — No polling, no background requests; endpoints are only hit when you click the icon. Costs zero tokens to use.
@@ -55,15 +57,15 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 host half (lib/index.js)
   ctx.webServer.register:
     GET /api/dsh-balance/balance     → official /user/balance (loopback-only guard)
-    GET /api/dsh-balance/active-cost → last prompt + session total (most recent session)
-    GET /api/dsh-balance/today-cost  → today's costs (dual: current workspace + all)
+    GET /api/dsh-balance/active-cost → last prompt + today-this-session (with session name, most recent session)
+    GET /api/dsh-balance/today-cost  → today's costs (dual: current workspace + all workspaces)
   Zero @deepseek-ai/* imports; loads from any profile layout.
   Also registers a deepseek_billing tool for model-driven queries.
 
 client half (lib/client.js)
   ctx.slots.inject("sidebar.footer.action")
-    → persistent sidebar footer card (balance + ratio bar + today)
-    → click opens four-tier cost popover + ⓘ term explanations
+    → persistent sidebar footer card (balance + today's cost, peak-tinted border)
+    → click opens five-tier cost popover + peak tag + ⓘ term explanations
 ```
 
 ## Installation
@@ -151,6 +153,14 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 `deepseek-chat` / `deepseek-reasoner` aliases map to Flash / Pro pricing respectively. Costs are **estimates**; actual billing from the provider is authoritative.
 
 ## Changelog
+
+### v0.5.0 — Five-tier costs & peak/off-peak status
+- ✨ **Added**: the cost breakdown is now five tiers — balance / last prompt / today-this-session / today-this-workspace / today-all-workspaces
+  - The last-prompt row labels the **session name** underneath (based on the most recent session)
+  - "Today · this session" = the current session's usage today; "Today · this workspace" = all sessions in the current workspace today (workspace anchored by the current session); "Today · all workspaces" = everything across all workspaces today
+- ✨ **Added**: peak/off-peak status visuals — card and popover borders tinted by window (orange at peak / green at off-peak), a "Peak/Off-peak" tag next to the popover title with a hover tooltip showing the current price tier
+- 🎨 **Changed**: removed the remaining-ratio bar; the balance number is now color-coded directly by threshold (healthy / amber / red)
+- 🗑️ **Removed**: the "This session" row (all-time session total) from the popover
 
 ### v0.2.0 — Last prompt & today total cost
 - ✨ **Added**: popover now shows "last prompt cost" and "today total cost"
