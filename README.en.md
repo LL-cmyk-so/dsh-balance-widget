@@ -24,7 +24,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 | **Zero external dependencies** | ✅ Imports no `@deepseek-ai/*` packages, no native modules | ❌ Most depend on dsh SDK packages |
 | **Node 24 ready** | ✅ Works out of the box on any profile layout | ⚠️ Many community plugins still error on Node 24 |
 | **Boot stability** | ✅ Registers routes via official `ctx.webServer`; never conflicts with apiproxy | ⚠️ Some self-host HTTP servers that crash `dsh web` on boot |
-| **On-demand queries** | ✅ Fetches balance only on click; no polling, zero background requests | Some always-on badges refresh on a timer |
+| **Always-fresh auto refresh** | ✅ Sidebar card refreshes balance & costs every 60s; opening the popover triggers an immediate refresh | Some always-on badges refresh on a timer |
 | **Peak/off-peak pricing** | ✅ Built-in official 2026-08-17 rate table, auto-switches by window | Partial support |
 | **Security** | ✅ API key stays in the host process; loopback-only guard | Varies |
 
@@ -40,11 +40,10 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 - **Peak/off-peak status** — The card and popover borders are tinted by the current window (orange at peak / green at off-peak), a "Peak/Off-peak" tag sits next to the popover title, and hovering it shows the current price tier (input/output per 1M tokens).
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
 - **One-click top-up** — a "Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
-- **Sidebar card** — a persistent card at the sidebar footer shows balance and today's cost; globally visible, refreshes every 60s.
+- **Sidebar card** — a persistent card at the sidebar footer shows balance and today's cost; globally visible, auto-refreshes every 60s (balance via the official API, costs parsed locally), and opening the popover triggers an immediate refresh.
 - **Balance color warning** — the balance number is tinted in three tiers: default (healthy) → amber (below `lowThreshold`) → red (below `criticalThreshold`).
 - **Official price auto-sync** — fetches the DeepSeek official pricing page on startup and every 12h; falls back to built-in rates on failure.
 - **Agent tool** — a `deepseek_billing` tool lets the model answer "how much balance do I have / how much did today cost".
-- **On-demand refresh** — No polling, no background requests; endpoints are only hit when you click the icon. Costs zero tokens to use.
 
 ## Why this plugin
 
@@ -154,6 +153,15 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 ## Changelog
 
+### v0.5.1 — Cold-start speedup & cleanup
+- 🚀 **Performance**: today-cost cold start dropped from ~5.4s to ~0.01s — only session files modified today are decompressed (mtime filter), parsed results are cached by (path, mtime), and parsing runs in parallel
+- ⏰ **Refresh wording**: README now matches the code — the persistent card auto-refreshes every 60s (the old "no polling" claims contradicted the code and have been corrected)
+- 🌏 **Timezone fix**: peak/off-peak windows are now computed in Beijing time (UTC+8) explicitly instead of the host's local timezone
+- 🧹 **Cleanup**: removed a dead client-side pricing stack (PRICING/priceSession) that was never called; all pricing now goes through the host
+- 📐 **Pricing parsing hardened**: peak rates are parsed explicitly from the official page (no more hard-coded "off-peak × 2"); if a cache-hit rate cannot be parsed the whole table falls back to built-in rates instead of silently pricing cache hits at 0
+- 🏷️ **Card label**: the card footer now reads "Today · all" to make clear it is the global (all-workspaces) figure
+- 🎨 **Visual refresh**: SVG wallet icon replaces 💰, press/pop micro-animations, muted secondary tiers in the popover
+
 ### v0.5.0 — Five-tier costs & peak/off-peak status
 - ✨ **Added**: the cost breakdown is now five tiers — balance / last prompt / today-this-session / today-this-workspace / today-all-workspaces
   - The last-prompt row labels the **session name** underneath (based on the most recent session)
@@ -176,7 +184,9 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 - Config tree: `dsh --profile web --dump-config` should show a `balance-widget` entry.
 - Balance route: after restarting dsh web, `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` should return `{ ok, balance_infos, modelId }`.
-- Cost routes: `curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` and `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` should return `{ cost, inputTokens, outputTokens, modelId }`.
+- Session costs: `curl -s http://127.0.0.1:3080/api/dsh-balance/active-cost` should return `{ lastPrompt, todaySession, title, sessionId, peak, workspaceName, ... }`; append `?session=SESSION_ID` to target a specific session.
+- Today costs: `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` should return `{ workspace: { cost, ..., cwd }, all: { cost, ... }, modelId }`.
+- Legacy route: `curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` still works and returns `{ cost, inputTokens, outputTokens, modelId }`.
 
 ## License
 

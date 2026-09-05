@@ -24,7 +24,7 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 | **零外部依赖** | ✅ 不 import 任何 `@deepseek-ai/*` 包，无原生模块 | ❌ 多数依赖 dsh SDK 包 |
 | **Node 24 兼容** | ✅ 天然兼容（零依赖设计），任何 profile 布局可加载 | ⚠️ 不少社区插件在 Node 24 下报错 |
 | **启动稳定性** | ✅ 用官方 `ctx.webServer` 注册路由，不与 apiproxy 冲突 | ⚠️ 有的自建 HTTP 服务导致 dsh web 启动崩溃 |
-| **按需查询** | ✅ 点击才查余额，无轮询、零后台请求 | 有的常驻徽章定时刷新 |
+| **常驻自动刷新** | ✅ 侧边栏卡片每 60s 自动刷新余额与成本，弹框点击即强刷 | 有的常驻徽章定时刷新 |
 | **峰谷定价** | ✅ 内置官方 2026-08-17 峰谷价表，自动按时段切换 | 部分支持 |
 | **安全性** | ✅ API key 仅在宿主进程，loopback-only 守卫 | 参差不齐 |
 
@@ -40,11 +40,10 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 - **峰谷状态标签** — 卡片与弹框边框按当前时段着色（峰时橙色 / 谷时绿色），弹框标题旁显示「峰时/谷时」标签，悬停可查看当前价格档位（输入/输出单价）。
 - **Token 用量** — 同时展示输入（含缓存命中）/ 输出 token 数。
 - **一键充值** — 弹层底部「去充值」链接直达 DeepSeek 官方充值页（platform.deepseek.com/top_up），新窗口打开。
-- **侧边栏常驻卡片** — 侧边栏底部（设置上方）显示余额 + 今日花费，全局可见，60 秒自动刷新。
+- **侧边栏常驻卡片** — 侧边栏底部（设置上方）显示余额 + 今日花费，全局可见；每 60 秒自动刷新（余额走官方接口、成本为本地会话解析），打开弹框时也会立即刷新一次，无需手动操作。
 - **余额数字变色预警** — 余额数字按三档着色：充足（默认色）→ 琥珀（低于 `lowThreshold`）→ 红色（低于 `criticalThreshold`），一眼判断余额健康度。
 - **官方价格自动同步** — 启动时 + 每 12 小时抓取 DeepSeek 官方定价页，改价自动跟进；失败回退内置价目表。
 - **模型工具查询** — 新增 `deepseek_billing` 工具，可直接问模型"余额多少/今天花了多少"。
-- **按需刷新** — 无轮询、无后台请求；只有点击图标时才发起查询，不消耗任何 token。
 
 ## 架构
 
@@ -151,6 +150,15 @@ DSH 的插件配置统一放在这个文件里：
 
 ## 版本历史
 
+### v0.5.1 — 冷启动提速与代码清理
+- 🚀 **性能**：今日成本冷启动从 ~5.4s 降至 ~0.01s——只解压当天活跃的会话文件（按 mtime 过滤）+ 解压结果按 (path, mtime) 长期缓存 + 并行解析
+- ⏰ **轮询口径**：README 与代码统一——常驻卡片每 60s 自动刷新（此前文档"无轮询"表述自相矛盾，已更正）
+- 🌏 **峰谷时区修正**：峰/谷判断改为显式按北京时间（UTC+8）计算，不再依赖宿主机时区
+- 🧹 **清理**：移除客户端一套从未调用的死计价代码（PRICING/priceSession），计价统一走宿主
+- 📐 **定价解析加固**：峰价改为从官方页面显式解析（不再硬编码"谷价 ×2"）；解析不到缓存命中价时整表回退内置价目表，避免静默按 0 计价
+- 🏷️ **卡片语义**：卡片底部"今日"改为"今日·全部"，明确是全局（所有工作区）口径
+- 🎨 **外观**：💰 换 SVG 钱包图标、弹框/卡片微交互动画、层级弱化（详情见 v0.5.1 diff）
+
 ### v0.5.0 — 五层级成本与峰谷状态
 - ✨ **新增**：成本明细改为五层级——余额 / 最近一次提问 / 今日·本会话 / 今日·本工作区 / 今日·所有工作区
   - 最近一次提问下方标注**会话名**（基于最近活跃会话）
@@ -173,7 +181,9 @@ DSH 的插件配置统一放在这个文件里：
 
 - 配置树：`dsh --profile web --dump-config` 应出现 `balance-widget` 条目
 - 余额路由：重启 dsh web 后 `curl -s http://127.0.0.1:3080/api/dsh-balance/balance` 应返回 `{ ok, balance_infos, modelId }`
-- 成本路由：`curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` 与 `curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` 应返回 `{ cost, inputTokens, outputTokens, modelId }`
+- 会话成本：`curl -s http://127.0.0.1:3080/api/dsh-balance/active-cost` 应返回 `{ lastPrompt, todaySession, title, sessionId, peak, workspaceName, ... }`；加 `?session=SESSION_ID` 可指定会话
+- 今日成本：`curl -s http://127.0.0.1:3080/api/dsh-balance/today-cost` 应返回 `{ workspace: { cost, ..., cwd }, all: { cost, ... }, modelId }`
+- 兼容旧路由：`curl -s "http://127.0.0.1:3080/api/dsh-balance/last-cost?session=SESSION_ID"` 仍可用，返回 `{ cost, inputTokens, outputTokens, modelId }`
 
 ## License
 
