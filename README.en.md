@@ -151,6 +151,34 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 `deepseek-chat` / `deepseek-reasoner` aliases map to Flash / Pro pricing respectively. Costs are **estimates**; actual billing from the provider is authoritative.
 
+## Security & permission boundaries
+
+This section is for the DSH Store / plugin audit: dependencies, runtime permissions, external services, and failure bounds.
+
+**Dependencies & compatibility**
+- Zero runtime dependencies: imports no `@deepseek-ai/*` packages; no third-party host deps
+- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.2.0` (DSH compatibility range)
+- `engines.node`: `^22.19.0 || >=24.0.0`
+- `peerDependencies["react"]`: `^18.2.0` (browser rendering only)
+
+**Runtime permissions**
+- `files`: reads only `~/.dsh/sessions/` session JSONL (cost stats); never writes or mutates any session file
+- `network`: only the DeepSeek official endpoints — `api.deepseek.com` (`GET /user/balance`) and `api-docs.deepseek.com` pricing page (fetched every 12h); no third-party proxy
+- `commands`: spawns `zstd -d -c` to decompress session files (macOS needs `brew install zstd`); no other commands
+- `credentials`: reads `DEEPSEEK_API_KEY` (resolved via the host credentials service), used only in the host process behind a loopback-only route guard; the browser never sees the key
+- All host routes are bound to the loopback address and unreachable externally
+
+**External services**
+- DeepSeek official balance endpoint `GET /user/balance` (on click / 60s refresh)
+- DeepSeek official pricing page (on startup + every 12h, for peak/off-peak rates)
+
+**Failure bounds**
+- Balance fetch failure: the panel shows the error and keeps the last successful snapshot (no interruption)
+- Pricing fetch failure: falls back to the built-in 2026-08-17 rate table, `pricingSource` marked `builtin`
+- Missing `zstd`: returns an actionable error (points to the install command) instead of failing silently
+- Missing/corrupt session files: that session is skipped; other sessions are unaffected
+- All costs are estimates; the provider's bill is authoritative
+
 ## Changelog
 
 ### v0.5.1 — Cold-start speedup & cleanup

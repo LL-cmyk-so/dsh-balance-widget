@@ -33,7 +33,8 @@
     }
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@deepseek-ai/dsh": ">=0.1.2-rc.1 <0.2.0"
   },
   "keywords": [
     "deepseek",
@@ -49,5 +50,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LL-cmyk-so/dsh-balance-widget.git"
-  }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "packageManager": "pnpm@11.7.0"
 }

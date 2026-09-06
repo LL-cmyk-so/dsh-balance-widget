@@ -148,6 +148,34 @@ DSH 的插件配置统一放在这个文件里：
 
 `deepseek-chat` / `deepseek-reasoner` 别名分别映射到 Flash / Pro 价格。成本为**估算值**，实际以官方账单为准。
 
+## 安全与权限边界
+
+本节面向 DSH Store / 插件审计，列出依赖、运行时权限、外部服务与失败边界。
+
+**依赖与兼容**
+- 零运行时依赖：不 import 任何 `@deepseek-ai/*` 包，宿主端无第三方依赖
+- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.2.0`（DSH 兼容范围）
+- `engines.node`: `^22.19.0 || >=24.0.0`
+- `peerDependencies["react"]`: `^18.2.0`（仅浏览器端渲染）
+
+**运行时权限**
+- `files`：只读 `~/.dsh/sessions/` 下的会话 JSONL（成本统计）；不写入、不修改任何会话文件
+- `network`：仅请求 DeepSeek 官方端点——`api.deepseek.com`（`GET /user/balance` 余额）与 `api-docs.deepseek.com` 定价页（每 12h 抓取）；不走任何第三方代理
+- `commands`：spawn `zstd -d -c` 解压会话文件（macOS 需 `brew install zstd`）；不执行其他命令
+- `credentials`：读取 `DEEPSEEK_API_KEY`（经宿主凭据服务解析），仅宿主进程使用、loopback-only 路由守卫；浏览器不接触密钥
+- 所有 host 路由均绑定 load 回环地址，外部不可达
+
+**外部服务**
+- DeepSeek 官方余额接口 `GET /user/balance`（点击/60s 刷新时调用）
+- DeepSeek 官方定价页（启动时 + 每 12h 抓取，用于峰谷单价）
+
+**失败边界**
+- 余额接口失败：面板提示失败信息，保留上次成功快照（不中断）
+- 定价页抓取失败：回退内置 2026-08-17 价目表，`pricingSource` 标记为 `builtin`
+- `zstd` 缺失：返回可读错误提示（指引安装），而非静默失败
+- 会话文件缺失/损坏：跳过该会话，不影响其他会话统计
+- 所有成本为估算值，实际以官方账单为准
+
 ## 版本历史
 
 ### v0.5.1 — 冷启动提速与代码清理
