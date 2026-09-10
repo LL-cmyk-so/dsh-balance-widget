@@ -25,7 +25,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 | **Node 24 ready** | ✅ Works out of the box on any profile layout | ⚠️ Many community plugins still error on Node 24 |
 | **Boot stability** | ✅ Registers routes via official `ctx.webServer`; never conflicts with apiproxy | ⚠️ Some self-host HTTP servers that crash `dsh web` on boot |
 | **Always-fresh auto refresh** | ✅ Sidebar card refreshes balance & costs every 60s; opening the popover triggers an immediate refresh | Some always-on badges refresh on a timer |
-| **Peak/off-peak pricing** | ✅ Built-in official 2026-08-17 rate table, auto-switches by window | Partial support |
+| **Peak/off-peak pricing** | ✅ Built-in official 2026-09-10 rate table, re-synced from the official page at startup and every 12h | Partial support |
 | **Security** | ✅ API key stays in the host process; loopback-only guard | Varies |
 
 **In one line**: *The zero-dependency, Node 24-ready balance/cost widget that never breaks `dsh web` boot.*
@@ -136,20 +136,22 @@ If you mainly use DeepSeek-V4-Pro, point the pricing model at it for a more accu
     modelId: deepseek-v4-pro
 ```
 
+**Note**: the provider has announced that V4-Pro is being retired — from 2026-09-14 12:00 CST, V4-Pro requests are routed to V4.1-Flash and billed at Flash rates. Keeping `deepseek-v4-pro` past that date will over-estimate costs, so the default Flash tier is the better choice.
+
 **Note**: `cordis.patch.yml` may already contain lines for other plugins — append new lines without touching existing ones.
 
 ## Pricing
 
-Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-08-17. Peak windows are Beijing time 09:00–12:00 and 14:00–18:00; prices are double the off-peak rates:
+Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-09-10. Peak windows are Beijing time 09:00–12:00 and 14:00–18:00; prices are double the off-peak rates:
 
 | Model | Window | Cache hit (input) | Cache miss (input) | Output |
 | --- | --- | --- | --- | --- |
-| V4-Flash | Off-peak | 0.05 | 1.5 | 4.5 |
-| V4-Flash | Peak | 0.10 | 3.0 | 9.0 |
+| V4.1-Flash | Off-peak | 0.02 | 1.0 | 4.0 |
+| V4.1-Flash | Peak | 0.04 | 2.0 | 8.0 |
 | V4-Pro | Off-peak | 0.15 | 4.5 | 13.5 |
 | V4-Pro | Peak | 0.30 | 9.0 | 27.0 |
 
-`deepseek-chat` / `deepseek-reasoner` aliases map to Flash / Pro pricing respectively. Costs are **estimates**; actual billing from the provider is authoritative.
+The official page currently lists only `deepseek-flash` and `deepseek-v4-pro`; older names (`deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `deepseek-chat`) still work and are billed at the Flash rate. The plugin re-parses the page at startup and every 12h, and falls back to the table above only when parsing fails. Costs are **estimates**; the provider's bill is authoritative.
 
 ## Security & permission boundaries
 
@@ -174,12 +176,18 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 
 **Failure bounds**
 - Balance fetch failure: the panel shows the error and keeps the last successful snapshot (no interruption)
-- Pricing fetch failure: falls back to the built-in 2026-08-17 rate table, `pricingSource` marked `builtin`
+- Pricing fetch failure: falls back to the built-in 2026-09-10 rate table, `pricingSource` marked `default` (`synced` once parsing succeeds)
 - Missing `zstd`: returns an actionable error (points to the install command) instead of failing silently
 - Missing/corrupt session files: that session is skipped; other sessions are unaffected
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.5.2 — DSH 0.1.5: new session format & new pricing page
+- 🐛 **Fixed**: DSH 0.1.5 writes session logs under a generation-tagged name (`session.v3.jsonl.zstd`), but the plugin only matched `session.jsonl.zstd`, so every session created after the upgrade was invisible — viewing one produced red error text in the popover, and today's cost was understated (measured ~36% low). Logs are now found by taking the highest generation per session directory; a migrated session's older file is a subset of the new one, so reading only the newest avoids double-counting the session
+- 🐛 **Fixed**: the official pricing page renamed the Flash column to `deepseek-flash` and cut its rates. The parser's model-id anchor landed on a page footnote, so the sync reported success while silently keeping the stale, higher rates — overstating costs by ~1.7x. The parser now anchors on the table's row labels and applies that column to every Flash-family name
+- 💰 **Rates**: the built-in fallback table now carries V4.1-Flash pricing (off-peak 0.02 / 1.0 / 4.0, peak 0.04 / 2.0 / 8.0 CNY per 1M tokens); the V4-Pro tier is unchanged
+- 📄 **Docs**: corrected the `pricingSource` values to `default` / `synced` (previously misdocumented as `builtin`)
 
 ### v0.5.1 — Cold-start speedup & cleanup
 - 🚀 **Performance**: today-cost cold start dropped from ~5.4s to ~0.01s — only session files modified today are decompressed (mtime filter), parsed results are cached by (path, mtime), and parsing runs in parallel
