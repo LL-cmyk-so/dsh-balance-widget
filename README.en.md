@@ -142,7 +142,7 @@ If you mainly use DeepSeek-V4-Pro, point the pricing model at it for a more accu
 
 ## Pricing
 
-Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-09-10. Peak windows are Beijing time 09:00–12:00 and 14:00–18:00; prices are double the off-peak rates:
+Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-09-10. Peak windows are Beijing time **Mon–Fri** 09:00–12:00 and 14:00–18:00 (weekends are off-peak all day); prices are double the off-peak rates:
 
 | Model | Window | Cache hit (input) | Cache miss (input) | Output |
 | --- | --- | --- | --- | --- |
@@ -182,6 +182,10 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.5.3 — weekends no longer mispriced as peak
+- 🐛 **Fixed**: the peak/off-peak check looked only at the hour and ignored the weekday, so weekends were priced as peak (2×) during 09:00–12:00 and 14:00–18:00, up to doubling "today's cost". The official rule is **Mon–Fri** 09:00–12:00 and 14:00–18:00 (everything else, weekends included, is off-peak); Saturday and Sunday are now excluded first, using the Beijing-time weekday
+- 📄 **Docs**: the pricing section and the peak/off-peak tooltips now state the Mon–Fri restriction
 
 ### v0.5.2 — DSH 0.1.5: new session format & new pricing page
 - 🐛 **Fixed**: DSH 0.1.5 writes session logs under a generation-tagged name (`session.v3.jsonl.zstd`), but the plugin only matched `session.jsonl.zstd`, so every session created after the upgrade was invisible — viewing one produced red error text in the popover, and today's cost was understated (measured ~36% low). Logs are now found by taking the highest generation per session directory; a migrated session's older file is a subset of the new one, so reading only the newest avoids double-counting the session
