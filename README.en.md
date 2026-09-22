@@ -1,6 +1,6 @@
 # dsh-balance-widget
 
-[中文](README.md) | **English**
+[中文](https://github.com/LL-cmyk-so/dsh-balance-widget/blob/main/README.md) | **English**
 
 [![npm](https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm)](https://www.npmjs.com/package/dsh-balance-widget)
 [![Stars](https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars)](https://github.com/LL-cmyk-so/dsh-balance-widget)
@@ -15,7 +15,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 
 | Sidebar card | Five-tier cost popover |
 | --- | --- |
-| ![Sidebar card](docs/screenshot-corner.png) | ![Cost popover](docs/screenshot-popover.png) |
+| ![Sidebar card](https://raw.githubusercontent.com/LL-cmyk-so/dsh-balance-widget/main/docs/screenshot-corner.png) | ![Cost popover](https://raw.githubusercontent.com/LL-cmyk-so/dsh-balance-widget/main/docs/screenshot-popover.png) |
 
 ## How it differs from similar plugins
 
@@ -188,6 +188,10 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.5.5 — README assets now render on the npm package page
+- 🐛 **Fixed**: the screenshots and the language switch used repository-relative paths (`docs/screenshot-corner.png`, `README.en.md`). The npm package page renders the README body only and does not resolve in-repo paths, so both screenshots and the language link were broken on npm. They are now absolute URLs: screenshots via `raw.githubusercontent.com`, the language switch via a GitHub blob link
+- 📦 **Scope**: documentation only; no code change
 
 ### v0.5.4 — search calls are now counted (previously dropped entirely)
 - 🐛 **Fixed**: the auxiliary model calls behind `web_search` contributed nothing to cost. DSH writes only a pre-dispatch `web/deepseek-search-llm-request` event per search (no usage), so any log-derived pricing undercounts systematically — measured 2026-09-22: all 1073 searches of the day were missing. Searches are now priced as requests × a calibrated constant and attributed to their session / workspace / day and turn

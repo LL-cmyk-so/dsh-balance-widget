@@ -1,6 +1,6 @@
 # dsh-balance-widget
 
-**中文** | [English](README.en.md)
+**中文** | [English](https://github.com/LL-cmyk-so/dsh-balance-widget/blob/main/README.en.md)
 
 [![npm](https://img.shields.io/npm/v/dsh-balance-widget?style=flat-square&label=npm)](https://www.npmjs.com/package/dsh-balance-widget)
 [![Stars](https://img.shields.io/github/stars/LL-cmyk-so/dsh-balance-widget?style=flat-square&label=Stars)](https://github.com/LL-cmyk-so/dsh-balance-widget)
@@ -15,7 +15,7 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 
 | 侧边栏卡片（左下角常驻） | 点击弹出五层级成本 |
 | --- | --- |
-| ![侧边栏卡片](docs/screenshot-corner.png) | ![成本明细弹框](docs/screenshot-popover.png) |
+| ![侧边栏卡片](https://raw.githubusercontent.com/LL-cmyk-so/dsh-balance-widget/main/docs/screenshot-corner.png) | ![成本明细弹框](https://raw.githubusercontent.com/LL-cmyk-so/dsh-balance-widget/main/docs/screenshot-popover.png) |
 
 ## 与同类插件的区别
 
@@ -185,6 +185,10 @@ DSH 的插件配置统一放在这个文件里：
 - 所有成本为估算值，实际以官方账单为准
 
 ## 版本历史
+
+### v0.5.5 — 修复 README 在 npm 包页面上的显示
+- 🐛 **修复**：README 的截图与语言切换此前用相对路径（`docs/screenshot-corner.png`、`README.en.md`）。npm 包页面只渲染 README 正文、不解析仓库内的相对路径，所以在 npm 上两张截图和语言链接都是坏的。现改为绝对 URL：截图走 `raw.githubusercontent.com`，语言切换走 GitHub blob 链接
+- 📦 **范围**：仅文档，代码无变化
 
 ### v0.5.4 — 计入搜索调用（此前全部漏算）
 - 🐛 **修复**：`web_search` 的辅助模型调用完全不计入成本。DSH 对每次搜索只写一个派发前的 `web/deepseek-search-llm-request` 事件（无 usage），所以按会话日志计价的实现系统性漏算——实测 2026-09-22 一天 1073 次搜索全部没进账。现按「请求次数 × 标定常数」计价，并归入该搜索所属的会话 / 工作区 / 当日及当轮
