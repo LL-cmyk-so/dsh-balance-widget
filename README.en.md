@@ -153,6 +153,12 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 The official page currently lists only `deepseek-flash` and `deepseek-v4-pro`; older names (`deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `deepseek-chat`) still work and are billed at the Flash rate. The plugin re-parses the page at startup and every 12h, and falls back to the table above only when parsing fails. Costs are **estimates**; the provider's bill is authoritative.
 
+### Search calls (estimated)
+
+Every **query** of a `web_search` call is a separate auxiliary model call (`@deepseek-ai/dsh-web-search-deepseek`, `deepseek-v4-flash` by default, up to `maxUses` per request). The session log records only the pre-dispatch `web/deepseek-search-llm-request` event — **no usage field** — so the real token counts exist in no local file.
+
+The plugin therefore counts requests × a calibrated constant: ~6k cache-miss input + ~2k output tokens per search, i.e. **¥0.014** off-peak and **¥0.028** at peak (calibrated 2026-09-22 against the balance delta: 14 searches measured **¥0.0133 each**). Searches are attributed to the session, workspace and day they belong to, but each amount is an estimate (±30% order).
+
 ## Security & permission boundaries
 
 This section is for the DSH Store / plugin audit: dependencies, runtime permissions, external services, and failure bounds.
@@ -182,6 +188,11 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.5.4 — search calls are now counted (previously dropped entirely)
+- 🐛 **Fixed**: the auxiliary model calls behind `web_search` contributed nothing to cost. DSH writes only a pre-dispatch `web/deepseek-search-llm-request` event per search (no usage), so any log-derived pricing undercounts systematically — measured 2026-09-22: all 1073 searches of the day were missing. Searches are now priced as requests × a calibrated constant and attributed to their session / workspace / day and turn
+- 📏 **Calibration**: ~6k cache-miss input + ~2k output tokens per search (¥0.014 off-peak, ¥0.028 at peak). Measured 2026-09-22 from the balance delta: 14 searches in one window, balance delta ¥0.28, minus ¥0.094 of log-derivable conversation cost → **¥0.0133 per search**
+- ⚠️ **Scope**: the search portion is an estimate (±30% order); conversation text is still priced exactly from the logs
 
 ### v0.5.3 — weekends no longer mispriced as peak
 - 🐛 **Fixed**: the peak/off-peak check looked only at the hour and ignored the weekday, so weekends were priced as peak (2×) during 09:00–12:00 and 14:00–18:00, up to doubling "today's cost". The official rule is **Mon–Fri** 09:00–12:00 and 14:00–18:00 (everything else, weekends included, is off-peak); Saturday and Sunday are now excluded first, using the Beijing-time weekday
