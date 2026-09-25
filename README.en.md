@@ -172,7 +172,7 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 **Runtime permissions**
 - `files`: reads only `~/.dsh/sessions/` session JSONL (cost stats); never writes or mutates any session file
 - `network`: only the DeepSeek official endpoints — `api.deepseek.com` (`GET /user/balance`) and `api-docs.deepseek.com` pricing page (fetched every 12h); no third-party proxy
-- `commands`: spawns `zstd -d -c` to decompress session files (macOS needs `brew install zstd`); no other commands
+- `commands`: **none**. Session logs are decompressed with Node's built-in zstd (`node:zlib`, needs Node >=22.15), so no `zstd` binary and no `PATH` dependency
 - `credentials`: reads `DEEPSEEK_API_KEY` (resolved via the host credentials service), used only in the host process behind a loopback-only route guard; the browser never sees the key
 - All host routes are bound to the loopback address and unreachable externally
 
@@ -183,7 +183,7 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 **Failure bounds**
 - Balance fetch failure: the panel shows the error and keeps the last successful snapshot (no interruption)
 - Pricing fetch failure: falls back to the built-in 2026-09-10 rate table, `pricingSource` marked `default` (`synced` once parsing succeeds)
-- Missing `zstd`: returns an actionable error (points to the install command) instead of failing silently
+- Node without built-in zstd (<22.15), or a session file that yields no frame: returns an actionable error instead of failing silently
 - Missing/corrupt session files: that session is skipped; other sessions are unaffected
 - All costs are estimates; the provider's bill is authoritative
 

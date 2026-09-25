@@ -169,7 +169,7 @@ DSH 的插件配置统一放在这个文件里：
 **运行时权限**
 - `files`：只读 `~/.dsh/sessions/` 下的会话 JSONL（成本统计）；不写入、不修改任何会话文件
 - `network`：仅请求 DeepSeek 官方端点——`api.deepseek.com`（`GET /user/balance` 余额）与 `api-docs.deepseek.com` 定价页（每 12h 抓取）；不走任何第三方代理
-- `commands`：spawn `zstd -d -c` 解压会话文件（macOS 需 `brew install zstd`）；不执行其他命令
+- `commands`：**不执行任何命令**。会话解压改用 Node 内置 zstd（`node:zlib`，需 Node ≥22.15），不再依赖 `zstd` 可执行文件与 `PATH`
 - `credentials`：读取 `DEEPSEEK_API_KEY`（经宿主凭据服务解析），仅宿主进程使用、loopback-only 路由守卫；浏览器不接触密钥
 - 所有 host 路由均绑定 load 回环地址，外部不可达
 
@@ -180,7 +180,7 @@ DSH 的插件配置统一放在这个文件里：
 **失败边界**
 - 余额接口失败：面板提示失败信息，保留上次成功快照（不中断）
 - 定价页抓取失败：回退内置 2026-09-10 价目表，`pricingSource` 标记为 `default`（解析成功则为 `synced`）
-- `zstd` 缺失：返回可读错误提示（指引安装），而非静默失败
+- Node 无内置 zstd（<22.15）或会话文件解不出任何帧：返回可读错误提示，而非静默失败
 - 会话文件缺失/损坏：跳过该会话，不影响其他会话统计
 - 所有成本为估算值，实际以官方账单为准
 
