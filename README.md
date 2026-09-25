@@ -9,7 +9,7 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常驻卡片显示账户余额与今日花费，点击弹出五层级成本明细（余额 / 最近提问·标注会话名 / 今日·本会话 / 今日·本工作区 / 今日·所有工作区）。
+DeepSeek Harness (DSH) **Web GUI 与桌面版**通用的余额与成本小部件：侧边栏底部常驻卡片显示账户余额与今日花费，点击弹出五层级成本明细（余额 / 最近提问·标注会话名 / 今日·本会话 / 今日·本工作区 / 今日·所有工作区）。
 
 ## 效果预览
 
@@ -28,7 +28,7 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 | **峰谷定价** | ✅ 内置官方 2026-09-10 峰谷价表，启动时与每 12h 自动从官方页刷新 | 部分支持 |
 | **安全性** | ✅ API key 仅在宿主进程，loopback-only 守卫 | 参差不齐 |
 
-**一句话**：*零依赖、Node 24 就绪、永不拖垮 dsh web 启动的余额/成本小部件。*
+**一句话**：*零依赖、Node 24 就绪、在 `dsh web` 与桌面版都不拖垮启动的余额/成本小部件。*
 
 ## 功能
 
@@ -37,7 +37,7 @@ DeepSeek Harness (DSH) Web GUI 的余额与成本小部件：侧边栏底部常�
 - **今日·本会话成本（估算）** — 当前会话今天（自然日）产生的 token 用量 × DeepSeek 官方峰谷定价表计算，随当前会话模型（默认 `deepseek-v4-flash`，可在配置中改为 `deepseek-v4-pro`）与北京时间高峰/空闲时段自动切换。
 - **今日·本工作区成本（估算）** — 遍历当前工作区（由当前会话锚定）下的所有会话，累加今天的 token 用量 × 单价。
 - **今日·所有工作区成本（估算）** — 遍历 `~/.dsh/sessions/` 下所有工作区的所有会话，累加今天的 token 用量 × 单价。
-- **峰谷状态标签** — 卡片与弹框边框按当前时段着色（峰时橙色 / 谷时绿色），弹框标题旁显示「峰时/谷时」标签，悬停可查看当前价格档位（输入/输出单价）。
+- **峰谷状态标签** — 卡片金额前的状态圆点按当前时段着色（峰时琥珀 / 谷时绿色），弹框标题旁显示「峰时/谷时」标签，悬停可查看当前价格档位（输入/输出单价）。
 - **Token 用量** — 同时展示输入（含缓存命中）/ 输出 token 数。
 - **一键充值** — 弹层底部「去充值」链接直达 DeepSeek 官方充值页（platform.deepseek.com/top_up），新窗口打开。
 - **侧边栏常驻卡片** — 侧边栏底部（设置上方）显示余额 + 今日花费，全局可见；每 60 秒自动刷新（余额走官方接口、成本为本地会话解析），打开弹框时也会立即刷新一次，无需手动操作。
@@ -58,7 +58,7 @@ host 半区 (lib/index.js)
 
 client 半区 (lib/client.js)
   ctx.slots.inject("sidebar.footer.action")
-    → 侧边栏底部常驻卡片（余额 + 今日花费，峰/谷时段描边着色）
+    → 侧边栏底部常驻卡片（余额 + 今日花费，峰/谷时段状态圆点；侧边栏收起时变为 36×36 图标按钮）
     → 点击弹出五层级成本明细 + 峰谷标签 + ⓘ 名词解释
 ```
 
@@ -79,6 +79,8 @@ dsh plugin --profile web add "link:$(pwd)"
 ```
 
 装完重启 `dsh web` 生效。
+
+**桌面版（DeepSeek Harness.app）同样支持**，安装目标是 `desktop` profile：可在桌面版侧边栏的「插件」面板里安装，或把包加进 `~/.dsh/profiles/desktop/package.json` 的依赖与 `dsh.profile.bundles`；装完**重启桌面版**生效。桌面版由 GUI 启动，本插件不依赖外部命令行，无需额外配置 PATH。
 
 ## 配置
 
@@ -185,6 +187,20 @@ DSH 的插件配置统一放在这个文件里：
 - 所有成本为估算值，实际以官方账单为准
 
 ## 版本历史
+
+### v0.6.0 — 适配 DSH 桌面版，界面与桌面端视觉对齐
+- 🖥️ **适配桌面版（DSH 0.1.7 / DeepSeek Harness.app）**
+  - **会话解压不再依赖 `zstd` 命令行**，改用 Node 内置 zstd（`node:zlib`）。桌面版由 GUI 启动，进程 PATH 只有 `/usr/bin:/bin:/usr/sbin:/sbin`，找不到 Homebrew 的 zstd——此前在桌面端「今日花费 / 最近一次提问」等所有成本档位都会直接报错
+  - **按帧解压 v4 会话日志**：日志是 append-only 的，每次 flush 追加一个独立 zstd 帧（实测一份 726 KB 的 v4 日志含 97 帧）。Node 的一次性解压只返回第一帧（258 B）——比报错更危险的是它会静默丢掉 99% 以上的数据。现按帧魔数逐帧解码，v0 / v3 / v4 三种日志与 `zstd -dc` 输出字节级一致
+  - **刷新图标按版本解析**：0.1.7 把产品图标改为尺寸中性权重（`IconRefreshOutlineRegular` + `size` 属性），旧名 `IconRefreshOutline14` 已不存在；把它当组件渲染会抛 React #130，而侧边栏槽位对崩溃条目的处理是整条摘掉——表现为「卡片闪一下、一点开就消失」。现按可用名解析并带本地 SVG 兜底
+  - **客户端注入声明清空**：`@deepseek-ai/dsh-client-runtime` 从不是真实包（0.1.5 与 0.1.7 都没有），浏览器端只依赖 react 与 shell 的 seed 模块
+- 🎨 **视觉贴合桌面端**
+  - 去掉卡片的状态边框（谷时绿 / 峰时琥珀，看着像「被选中」）；峰/谷改为金额前的 6px 状态圆点。填充色、12px 圆角、金额 14px 字号均对齐桌面端会话行所用的设计 token
+  - 卡片占满侧边栏列：此前被 flex 收缩到 131px 宽并横向溢出 8px
+  - **新增侧边栏收起态**：在 56px 图标轨里渲染 36×36 图标按钮（与轨道其它按钮同规格），状态点变为图标角标
+  - **弹层改挂 `document.body`**：侧边栏列是 `overflow:hidden`，收起态下弹层此前会被裁到只剩左边一小条；面板宽度跟随卡片（打开时实测，240px 起），并用 `ResizeObserver` 在拖动侧边栏 / 缩放窗口时实时跟随
+  - 阴影与焦点环改用桌面端 token（`--dsw-shadow-lv3`、`--dsw-focus-ring-*`）
+  - 📄 文档：README 两张截图按新外观重新生成
 
 ### v0.5.5 — 修复 README 在 npm 包页面上的显示
 - 🐛 **修复**：README 的截图与语言切换此前用相对路径（`docs/screenshot-corner.png`、`README.en.md`）。npm 包页面只渲染 README 正文、不解析仓库内的相对路径，所以在 npm 上两张截图和语言链接都是坏的。现改为绝对 URL：截图走 `raw.githubusercontent.com`，语言切换走 GitHub blob 链接

@@ -9,7 +9,7 @@
 [![Node 24](https://img.shields.io/badge/Node%2024-ready-brightgreen?style=flat-square)](https://nodejs.org)
 [![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen?style=flat-square)]()
 
-A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI: a persistent sidebar footer card shows the account balance and today's cost; clicking opens a five-tier cost breakdown (balance / last prompt with its session name / today-this-session / today-this-workspace / today-all-workspaces).
+A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) **Web GUI and desktop app**: a persistent sidebar footer card shows the account balance and today's cost; clicking opens a five-tier cost breakdown (balance / last prompt with its session name / today-this-session / today-this-workspace / today-all-workspaces).
 
 ## Preview
 
@@ -28,7 +28,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 | **Peak/off-peak pricing** | ✅ Built-in official 2026-09-10 rate table, re-synced from the official page at startup and every 12h | Partial support |
 | **Security** | ✅ API key stays in the host process; loopback-only guard | Varies |
 
-**In one line**: *The zero-dependency, Node 24-ready balance/cost widget that never breaks `dsh web` boot.*
+**In one line**: *The zero-dependency, Node 24-ready balance/cost widget that never breaks `dsh web` or the desktop app on boot.*
 
 ## Features
 
@@ -37,7 +37,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 - **Today · this session cost (estimate)** — The current session's usage today (calendar day) × DeepSeek's official peak/off-peak price table. Follows the configured model (default `deepseek-v4-flash`, switchable to `deepseek-v4-pro`) and the Beijing-time peak/off-peak windows automatically.
 - **Today · this workspace cost (estimate)** — Sums today's token usage × price across every session in the current workspace (anchored by the current session).
 - **Today · all workspaces cost (estimate)** — Walks every session under `~/.dsh/sessions/` and sums today's (calendar day) token usage × price.
-- **Peak/off-peak status** — The card and popover borders are tinted by the current window (orange at peak / green at off-peak), a "Peak/Off-peak" tag sits next to the popover title, and hovering it shows the current price tier (input/output per 1M tokens).
+- **Peak/off-peak status** — a status dot before the card's amount is tinted by the current window (amber at peak / green at off-peak), a "Peak/Off-peak" tag sits next to the popover title, and hovering it shows the current price tier (input/output per 1M tokens).
 - **Token usage** — Also shows the session's input (incl. cache hits) / output tokens.
 - **One-click top-up** — a "Top up" link in the popover footer jumps to the official DeepSeek top-up page (platform.deepseek.com/top_up) in a new tab.
 - **Sidebar card** — a persistent card at the sidebar footer shows balance and today's cost; globally visible, auto-refreshes every 60s (balance via the official API, costs parsed locally), and opening the popover triggers an immediate refresh.
@@ -63,7 +63,7 @@ host half (lib/index.js)
 
 client half (lib/client.js)
   ctx.slots.inject("sidebar.footer.action")
-    → persistent sidebar footer card (balance + today's cost, peak-tinted border)
+    → persistent sidebar footer card (balance + today's cost, peak/off-peak status dot; a 36×36 icon button while the sidebar is collapsed)
     → click opens five-tier cost popover + peak tag + ⓘ term explanations
 ```
 
@@ -84,6 +84,8 @@ dsh plugin --profile web add "link:$(pwd)"
 ```
 
 Then restart `dsh web`.
+
+**The desktop app (DeepSeek Harness.app) is supported too**, with `desktop` as the install target: install it from the desktop app's sidebar "Plugins" panel, or add the package to `~/.dsh/profiles/desktop/package.json` (dependency plus `dsh.profile.bundles`), then restart the desktop app. Because the desktop app is launched by the GUI, note that this plugin shells out to nothing — there is no PATH to configure.
 
 ## Configuration
 
@@ -188,6 +190,20 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.6.0 — desktop app support, and a UI that matches the desktop shell
+- 🖥️ **Desktop app support (DSH 0.1.7 / DeepSeek Harness.app)**
+  - **Session logs are no longer decompressed by the `zstd` CLI** — Node's built-in zstd (`node:zlib`) does it instead. The desktop app is launched by the GUI, so its PATH is only `/usr/bin:/bin:/usr/sbin:/sbin` and the Homebrew `zstd` is invisible: every cost tier (today's spend, last prompt) failed outright there
+  - **v4 session logs are decoded frame by frame.** The log is append-only: each flush appends its own zstd frame (a measured 726 KB v4 log held 97 of them). Node's one-shot decompressor returns only the first frame (258 B) — and silently dropping 99% of the data is worse than failing. Frames are now located by their magic number; v0 / v3 / v4 logs decode byte-identically to `zstd -dc`
+  - **The refresh glyph is resolved per DSH version.** 0.1.7 renamed product icons to size-neutral weights (`IconRefreshOutlineRegular` plus a `size` prop) and dropped `IconRefreshOutline14`; rendering the missing name as a component throws React #130, and the sidebar slot answers a crashed entry by dropping the whole card — the "card flashes, then vanishes on click" report. The glyph is now resolved from whichever name exists, with a local SVG fallback
+  - **The client inject declaration is empty**: `@deepseek-ai/dsh-client-runtime` was never a real package (absent in both 0.1.5 and 0.1.7); the browser half needs only react and the shell's seed modules
+- 🎨 **Visual alignment with the desktop shell**
+  - Dropped the card's state border (green off-peak / amber peak, which read as "selected") in favour of a 6px status dot before the amount; fill, 12px radius and 14px amount text now use the same design tokens as the desktop's own session rows
+  - The card fills the sidebar column — it used to be flex-shrunk to 131px and overflowed by 8px
+  - **New collapsed-rail state**: in the 56px icon rail the card becomes a 36×36 icon button (matching the rail's other buttons) with the status dot as a badge
+  - **The popover is portalled into `document.body`**: the sidebar column clips its children (`overflow:hidden`), so in the rail the panel was cut off at the sidebar edge. Its width now follows the card (measured at open time, 240px floor) and re-anchors through a `ResizeObserver` while the sidebar or the window is resized
+  - Shadow and focus ring now come from the shell's tokens (`--dsw-shadow-lv3`, `--dsw-focus-ring-*`)
+  - 📄 Docs: both README screenshots regenerated for the new look
 
 ### v0.5.5 — README assets now render on the npm package page
 - 🐛 **Fixed**: the screenshots and the language switch used repository-relative paths (`docs/screenshot-corner.png`, `README.en.md`). The npm package page renders the README body only and does not resolve in-repo paths, so both screenshots and the language link were broken on npm. They are now absolute URLs: screenshots via `raw.githubusercontent.com`, the language switch via a GitHub blob link
