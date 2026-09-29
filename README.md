@@ -164,7 +164,7 @@ DSH 的插件配置统一放在这个文件里：
 
 **依赖与兼容**
 - 零运行时依赖：不 import 任何 `@deepseek-ai/*` 包，宿主端无第三方依赖
-- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.2.0`（DSH 兼容范围）
+- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.3.0`（DSH 兼容范围；0.1.5 / 0.1.7 / 0.2.0 实测通过）
 - `engines.node`: `^22.19.0 || >=24.0.0`
 - `peerDependencies["react"]`: `^18.2.0`（仅浏览器端渲染）
 
@@ -187,6 +187,11 @@ DSH 的插件配置统一放在这个文件里：
 - 所有成本为估算值，实际以官方账单为准
 
 ## 版本历史
+
+### v0.6.1 — 兼容范围放宽到 DSH 0.2.0（否则升级后插件会被静默摘掉）
+- 🐛 **修复**：DSH 0.2.0 新增了插件兼容性闸门（`dsh-app-boot` 的 `evaluatePluginCompatibility`），它把 `peerDependencies` 里每个 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 范围与运行时版本比对，**且预发布版本参与范围匹配**（`semver.satisfies(..., { includePrerelease: true })`）；不匹配且未被豁免的 bundle 在启动时被**静默跳过**（`loadProfileDirectory` 收进 `skippedBundles`，不报错、也不改 manifest）。旧声明 `>=0.1.2-rc.1 <0.2.0` 恰好覆盖 `0.2.0-rc.1`（所以在 0.2.0-rc.1 桌面上一切正常，实测确认），但**不覆盖 0.2.0 正式版**——桌面版一升级，侧边栏卡片就会直接消失，插件管理器还会要求 `dsh plugin allow-version` 手动豁免。现放宽为 `<0.3.0`（实测覆盖 0.2.0 / 0.2.1 / 0.3.0-rc.1）
+- ✅ **0.2.0 兼容性实测**（在 0.2.0-rc.1 桌面版 + 真实浏览器上运行）：宿主五条路由全部正常；会话日志仍为 `SESSION_FORMAT_VERSION = 4`，`totalTokens = inputTokens + outputTokens + cacheReadTokens` 在 394 条 usage 事件上全部成立（计价公式未变）；`sidebar.footer.action` 槽位、`dsh.client.platform === "web"` 加载闸门、`IconRefreshOutlineRegular` 图标名均未变；插件用到的 19 个 `--dsw-*` token 全部存在（其中 15 个在 `body[data-ds-dark-theme]` 下重定义，弹层 portal 到 `document.body` 仍能继承主题）；React 仍为 18.3.1；收起态 36×36 图标按钮与弹层定位照常
+- 📦 **范围**：仅 `package.json` 的兼容范围声明与文档，运行代码无变化
 
 ### v0.6.0 — 适配 DSH 桌面版，界面与桌面端视觉对齐
 - 🖥️ **适配桌面版（DSH 0.1.7 / DeepSeek Harness.app）**

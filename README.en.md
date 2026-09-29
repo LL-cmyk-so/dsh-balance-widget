@@ -167,7 +167,7 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 
 **Dependencies & compatibility**
 - Zero runtime dependencies: imports no `@deepseek-ai/*` packages; no third-party host deps
-- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.2.0` (DSH compatibility range)
+- `peerDependencies["@deepseek-ai/dsh"]`: `>=0.1.2-rc.1 <0.3.0` (DSH compatibility range; 0.1.5 / 0.1.7 / 0.2.0 verified)
 - `engines.node`: `^22.19.0 || >=24.0.0`
 - `peerDependencies["react"]`: `^18.2.0` (browser rendering only)
 
@@ -190,6 +190,11 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.6.1 — compatibility range widened to DSH 0.2.0 (upgrading would otherwise drop the plugin silently)
+- 🐛 **Fixed**: DSH 0.2.0 adds a plugin compatibility gate (`evaluatePluginCompatibility` in `dsh-app-boot`). It matches every declared `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` peer range against the running version — **prereleases included** (`semver.satisfies(..., { includePrerelease: true })`) — and a mismatching, non-exempted bundle is **skipped silently at startup** (`loadProfileDirectory` files it under `skippedBundles`: no error, no manifest change). The old declaration `>=0.1.2-rc.1 <0.2.0` happened to cover `0.2.0-rc.1` (which is why the widget works on the current 0.2.0-rc.1 desktop, verified live) but **not 0.2.0 final** — so the first stable-desktop upgrade would have made the sidebar card vanish, with the plugin manager demanding a manual `dsh plugin allow-version` exemption. The range is now `<0.3.0` (verified to cover 0.2.0 / 0.2.1 / 0.3.0-rc.1)
+- ✅ **Live 0.2.0 compatibility check** (against the 0.2.0-rc.1 desktop app, driven in a real browser): all five host routes answer; session logs are still `SESSION_FORMAT_VERSION = 4` and `totalTokens = inputTokens + outputTokens + cacheReadTokens` holds for all 394 usage events (pricing math unchanged); the `sidebar.footer.action` slot, the `dsh.client.platform === "web"` loading gate and the `IconRefreshOutlineRegular` name are all unchanged; every one of the 19 `--dsw-*` tokens the plugin uses still exists (15 of them redefined under `body[data-ds-dark-theme]`, and the popover portalled into `document.body` still inherits the theme); React is still 18.3.1; the 36×36 collapsed-rail button and the popover anchoring behave as before
+- 📦 **Scope**: the compatibility range in `package.json` plus documentation; no runtime code changed
 
 ### v0.6.0 — desktop app support, and a UI that matches the desktop shell
 - 🖥️ **Desktop app support (DSH 0.1.7 / DeepSeek Harness.app)**
