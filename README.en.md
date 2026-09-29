@@ -32,7 +32,7 @@ A balance & cost widget for the [DeepSeek Harness](https://github.com/deepseek-a
 
 ## Features
 
-- **Account balance** — On click, the host proxies DeepSeek's official `GET /user/balance` and shows the `¥` balance; the balance number is color-coded by threshold (healthy / amber below `lowThreshold` / red below `criticalThreshold`). The API key is resolved through the host credentials service and never leaves the host process; the browser only talks to same-origin routes.
+- **Account balance** — The balance comes from the host account service `deepseekAccount`, provided by `@deepseek-ai/dsh-deepseek-account-platform` — the official "Settings → Account & balance" page's own source, so both surfaces show the same number and **no API key is needed**; unsigned hosts and older runtimes (0.1.x) fall back to DeepSeek's official `GET /user/balance`. The `¥` balance is color-coded by threshold (healthy / amber below `lowThreshold` / red below `criticalThreshold`). The API key is resolved through the host credentials service and never leaves the host process; the browser only talks to same-origin routes.
 - **Last prompt cost (estimate)** — Parses the most recent session file and prices the last turn's token usage, answering "how much did that last prompt cost", with the **session name** labeled underneath.
 - **Today · this session cost (estimate)** — The current session's usage today (calendar day) × DeepSeek's official peak/off-peak price table. Follows the configured model (default `deepseek-v4-flash`, switchable to `deepseek-v4-pro`) and the Beijing-time peak/off-peak windows automatically.
 - **Today · this workspace cost (estimate)** — Sums today's token usage × price across every session in the current workspace (anchored by the current session).
@@ -173,13 +173,14 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 
 **Runtime permissions**
 - `files`: reads only `~/.dsh/sessions/` session JSONL (cost stats); never writes or mutates any session file
-- `network`: only the DeepSeek official endpoints — `api.deepseek.com` (`GET /user/balance`) and `api-docs.deepseek.com` pricing page (fetched every 12h); no third-party proxy
+- `network`: only the DeepSeek official endpoints — `api.deepseek.com` (`GET /user/balance`, used only when unsigned or on an older host; a signed-in runtime reads the host's `deepseekAccount` service instead, so no plugin request leaves the process) and `api-docs.deepseek.com` pricing page (fetched every 12h); no third-party proxy
 - `commands`: **none**. Session logs are decompressed with Node's built-in zstd (`node:zlib`, needs Node >=22.15), so no `zstd` binary and no `PATH` dependency
-- `credentials`: reads `DEEPSEEK_API_KEY` (resolved via the host credentials service), used only in the host process behind a loopback-only route guard; the browser never sees the key
+- `credentials`: reads `DEEPSEEK_API_KEY` on the fallback path only (resolved via the host credentials service), used only in the host process behind a loopback-only route guard; the browser never sees the key. A signed-in account reads no key at all
 - All host routes are bound to the loopback address and unreachable externally
 
 **External services**
-- DeepSeek official balance endpoint `GET /user/balance` (on click / 60s refresh)
+- Host account service `deepseekAccount` (DSH 0.2.0+ with a signed-in account; the balance is the official page's own value, truncated to cents the way that page displays it)
+- DeepSeek official balance endpoint `GET /user/balance` (fallback: unsigned or older host; on click / 60s refresh)
 - DeepSeek official pricing page (on startup + every 12h, for peak/off-peak rates)
 
 **Failure bounds**
@@ -190,6 +191,14 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.6.2 — the balance now prefers the official account service (same source as the settings page, no API key needed)
+- ✨ **The balance is read from the host account service `deepseekAccount` (provided by `@deepseek-ai/dsh-deepseek-account-platform`)** whenever DSH >= 0.2.0 ships it **and a DeepSeek account is signed in**. That service is the official "Settings → Account & balance" page's own source, so the card and the settings page show the same number. Amounts follow the official rule — **positive values are truncated to cents** (`55.6787307800000000` → `55.67`, matching the page) — with the purchased wallet from `value[]`, the granted wallet from `bonusWallets[]`, their sum as the total, and one entry per currency
+- 🚪 **Every fallback is unchanged**: when signed out, when the host has no such service (DSH 0.1.x), or when the account read fails (expired token and friends), the balance comes from the original `GET /user/balance` + `DEEPSEEK_API_KEY`, exactly as in 0.6.1; a failed account read logs one warning saying why
+- 🔑 **Signed in, no key is read at all**: the balance no longer hard-depends on `DEEPSEEK_API_KEY`, so an account-only install still shows a balance
+- 🔎 **Auditable**: the balance response carries a `balanceSource` field (`deepseekAccount` or the fallback path), so it is always clear where a number came from
+- 🧪 **Verified**: a fake cordis ctx drives the **real routes** through 12 assertions — account mapping, multi-currency and bonus summation, cent truncation, signed-out fallback, missing-service fallback, throwing-account fallback with a warning, account winning over an API key, and the agent billing tool reading the same source
+- 📏 **Measured same-source** (2026-09-29): the official `account/getBalance` returned `¥55.6787307800000000` while the card showed `¥55.67` — one amount, and the official one simply stops at cents
 
 ### v0.6.1 — compatibility range widened to DSH 0.2.0 (upgrading would otherwise drop the plugin silently)
 - 🐛 **Fixed**: DSH 0.2.0 adds a plugin compatibility gate (`evaluatePluginCompatibility` in `dsh-app-boot`). It matches every declared `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` peer range against the running version — **prereleases included** (`semver.satisfies(..., { includePrerelease: true })`) — and a mismatching, non-exempted bundle is **skipped silently at startup** (`loadProfileDirectory` files it under `skippedBundles`: no error, no manifest change). The old declaration `>=0.1.2-rc.1 <0.2.0` happened to cover `0.2.0-rc.1` (which is why the widget works on the current 0.2.0-rc.1 desktop, verified live) but **not 0.2.0 final** — so the first stable-desktop upgrade would have made the sidebar card vanish, with the plugin manager demanding a manual `dsh plugin allow-version` exemption. The range is now `<0.3.0` (verified to cover 0.2.0 / 0.2.1 / 0.3.0-rc.1)

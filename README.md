@@ -32,7 +32,7 @@ DeepSeek Harness (DSH) **Web GUI 与桌面版**通用的余额与成本小部件
 
 ## 功能
 
-- **账户余额** — 点击图标时经宿主代理查询 DeepSeek 官方 `GET /user/balance`，展示 `¥` 余额；余额数字按阈值自动变色（充足 / 低于 `lowThreshold` 变黄 / 低于 `criticalThreshold` 变红）；API key 只在宿主进程内读取（凭据服务），浏览器不接触密钥。
+- **账户余额** — 余额优先取自宿主账号服务 `deepseekAccount`（由 `@deepseek-ai/dsh-deepseek-account-platform` 提供，即官方「设置 → 账号与余额」页的同一来源，因此两处显示同一个数字，且**不需要 API Key**）；未登录或旧版宿主（0.1.x）时回退到 DeepSeek 官方 `GET /user/balance`。展示 `¥` 余额，按阈值自动变色（充足 / 低于 `lowThreshold` 变黄 / 低于 `criticalThreshold` 变红）；API key 只在宿主进程内读取（凭据服务），浏览器不接触密钥。
 - **最近一次提问成本（估算）** — 从最近活跃会话文件解析最后一个 turn 的 token 用量 × 单价，回答"刚才那条提问花了多少"；下方标注该会话的**会话名**。
 - **今日·本会话成本（估算）** — 当前会话今天（自然日）产生的 token 用量 × DeepSeek 官方峰谷定价表计算，随当前会话模型（默认 `deepseek-v4-flash`，可在配置中改为 `deepseek-v4-pro`）与北京时间高峰/空闲时段自动切换。
 - **今日·本工作区成本（估算）** — 遍历当前工作区（由当前会话锚定）下的所有会话，累加今天的 token 用量 × 单价。
@@ -170,13 +170,14 @@ DSH 的插件配置统一放在这个文件里：
 
 **运行时权限**
 - `files`：只读 `~/.dsh/sessions/` 下的会话 JSONL（成本统计）；不写入、不修改任何会话文件
-- `network`：仅请求 DeepSeek 官方端点——`api.deepseek.com`（`GET /user/balance` 余额）与 `api-docs.deepseek.com` 定价页（每 12h 抓取）；不走任何第三方代理
+- `network`：仅请求 DeepSeek 官方端点——`api.deepseek.com`（`GET /user/balance`，仅在未登录/旧版宿主时使用；已登录时余额走宿主的 `deepseekAccount` 服务，不产生本插件的网络请求）与 `api-docs.deepseek.com` 定价页（每 12h 抓取）；不走任何第三方代理
 - `commands`：**不执行任何命令**。会话解压改用 Node 内置 zstd（`node:zlib`，需 Node ≥22.15），不再依赖 `zstd` 可执行文件与 `PATH`
-- `credentials`：读取 `DEEPSEEK_API_KEY`（经宿主凭据服务解析），仅宿主进程使用、loopback-only 路由守卫；浏览器不接触密钥
+- `credentials`：仅在回退路径上读取 `DEEPSEEK_API_KEY`（经宿主凭据服务解析），仅宿主进程使用、loopback-only 路由守卫；浏览器不接触密钥。已登录账号时余额不读任何密钥
 - 所有 host 路由均绑定 load 回环地址，外部不可达
 
 **外部服务**
-- DeepSeek 官方余额接口 `GET /user/balance`（点击/60s 刷新时调用）
+- 宿主账号服务 `deepseekAccount`（DSH 0.2.0+ 且已登录账号时；余额与官方账号页同源，金额按官方规则截断到分）
+- DeepSeek 官方余额接口 `GET /user/balance`（回退路径：未登录或旧版宿主；点击/60s 刷新时调用）
 - DeepSeek 官方定价页（启动时 + 每 12h 抓取，用于峰谷单价）
 
 **失败边界**
@@ -187,6 +188,14 @@ DSH 的插件配置统一放在这个文件里：
 - 所有成本为估算值，实际以官方账单为准
 
 ## 版本历史
+
+### v0.6.2 — 余额优先读官方账号服务（与设置页同源，不再需要 API Key）
+- ✨ **余额优先取自宿主账号服务 `deepseekAccount`**：当 DSH ≥ 0.2.0 **且已登录 DeepSeek 账号**时，余额改读这个服务——它就是官方「设置 → 账号与余额」页的数据来源，所以卡片与设置页显示同一个数字。金额按官方规则处理：**正金额截断至分**（`55.6787307800000000` → `55.67`，与设置页一致），充值余额 = 官方 `value[]`、赠金余额 = `bonusWallets[]`，总额为两者之和，多币种各自成组
+- 🚪 **降级路径完全不变**：未登录、宿主无该服务（DSH 0.1.x）、或账号读取失败（token 过期等）时，一律回退到原来的 `GET /user/balance` + `DEEPSEEK_API_KEY`，行为与 0.6.1 相同；账号读取失败会记一条 warn 说明原因
+- 🔑 **登录态下余额不读任何密钥**：不再强制依赖 `DEEPSEEK_API_KEY`，纯账号模式（不配 API Key）也能显示余额
+- 🔎 **可审计**：余额响应新增 `balanceSource` 字段（`deepseekAccount` 或回退路径），便于确认这一次的数字从哪来
+- 🧪 **验证**：用假 cordis ctx 驱动**真实路由**跑 12 项断言全通过——账号映射 / 多币种与赠金求和 / 截断到分、未登录回退、服务缺失回退、账号抛错回退并告警、账号优先于 API Key、agent 计费工具同源
+- 📏 **实测同源**（2026-09-29）：官方 `account/getBalance` 返回 `¥55.6787307800000000`，插件卡片显示 `¥55.67` —— 同一笔钱，差别只是官方只给分
 
 ### v0.6.1 — 兼容范围放宽到 DSH 0.2.0（否则升级后插件会被静默摘掉）
 - 🐛 **修复**：DSH 0.2.0 新增了插件兼容性闸门（`dsh-app-boot` 的 `evaluatePluginCompatibility`），它把 `peerDependencies` 里每个 `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 范围与运行时版本比对，**且预发布版本参与范围匹配**（`semver.satisfies(..., { includePrerelease: true })`）；不匹配且未被豁免的 bundle 在启动时被**静默跳过**（`loadProfileDirectory` 收进 `skippedBundles`，不报错、也不改 manifest）。旧声明 `>=0.1.2-rc.1 <0.2.0` 恰好覆盖 `0.2.0-rc.1`（所以在 0.2.0-rc.1 桌面上一切正常，实测确认），但**不覆盖 0.2.0 正式版**——桌面版一升级，侧边栏卡片就会直接消失，插件管理器还会要求 `dsh plugin allow-version` 手动豁免。现放宽为 `<0.3.0`（实测覆盖 0.2.0 / 0.2.1 / 0.3.0-rc.1）
