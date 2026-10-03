@@ -144,7 +144,7 @@ If you mainly use DeepSeek-V4-Pro, point the pricing model at it for a more accu
 
 ## Pricing
 
-Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-09-10. Peak windows are Beijing time **Mon–Fri** 09:00–12:00 and 14:00–18:00 (weekends are off-peak all day); prices are double the off-peak rates:
+Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 2026-09-10. Peak windows are Beijing time **Mon–Fri (China's statutory holidays excluded)** 09:00–12:00 and 14:00–18:00; **everything else is off-peak**, weekends (including 调休 make-up workdays) and statutory holidays all day included. Peak prices are double the off-peak rates:
 
 | Model | Window | Cache hit (input) | Cache miss (input) | Output |
 | --- | --- | --- | --- | --- |
@@ -191,6 +191,13 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.6.3 — China's statutory holidays are now priced off-peak all day
+- 🐛 **Fixed**: the peak/off-peak check excluded weekends but **not China's statutory holidays**. The official rule is "Beijing time **Mon–Fri (China's statutory holidays excluded)** 09:00–12:00 and 14:00–18:00 are peak; everything else — weekends and statutory holidays all day — is off-peak", so a statutory holiday falling on a weekday was **priced at 2×**. Measured against the built-in 2026 arrangement: Spring Festival 2/18, Dragon Boat 6/19, Mid-Autumn 9/25 and National Day 10/1–10/7 were all mispriced as peak, doubling their cost
+- 📅 **The 2026 statutory holiday table is built in** ([国办发明电〔2025〕7号](https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm); **33 days** across New Year, Spring Festival, Qingming, Labour Day, Dragon Boat, Mid-Autumn and National Day — **19 of them on weekdays**, exactly the ones that used to be priced at 2×), matched on the Beijing calendar day. Make-up workdays that fall on a Saturday or Sunday were already off-peak (the official rule lists weekends outright); they are now pinned by tests too
+- 🧪 **Differential verification**: 14 fixture sessions (each with its own fake `$HOME`, driven through the real route, real zstd frames and real pricing) assert ¥1.00 all day on holidays, ¥2.00 inside a normal weekday peak window, and the first working day after a holiday plus the lunch/evening boundaries — **14/14 pass**. Running the same cases against the pre-fix code fails all six holiday cases (¥2.00)
+- ⚠️ **Maintenance note**: the table needs an annual refresh (the State Council publishes the next arrangement, usually in the previous November); years it does not cover fall back to the old weekend-only rule
+- 📄 **Docs**: the pricing section and the peak/off-peak tooltips (both languages) now state "statutory holidays excluded / make-up workdays included" precisely
 
 ### v0.6.2 — the balance now prefers the official account service (same source as the settings page, no API key needed)
 - ✨ **The balance is read from the host account service `deepseekAccount` (provided by `@deepseek-ai/dsh-deepseek-account-platform`)** whenever DSH >= 0.2.0 ships it **and a DeepSeek account is signed in**. That service is the official "Settings → Account & balance" page's own source, so the card and the settings page show the same number. Amounts follow the official rule — **positive values are truncated to cents** (`55.6787307800000000` → `55.67`, matching the page) — with the purchased wallet from `value[]`, the granted wallet from `bonusWallets[]`, their sum as the total, and one entry per currency
