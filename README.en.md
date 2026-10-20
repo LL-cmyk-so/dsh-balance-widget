@@ -155,11 +155,22 @@ Built-in DeepSeek official peak/off-peak pricing (CNY per 1M tokens), effective 
 
 The official page currently lists only `deepseek-flash` and `deepseek-v4-pro`; older names (`deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `deepseek-chat`) still work and are billed at the Flash rate. The plugin re-parses the page at startup and every 12h, and falls back to the table above only when parsing fails. Costs are **estimates**; the provider's bill is authoritative.
 
+### Every in-session model call is counted
+
+Anything in the log that **carries usage** is priced exactly at the official peak/off-peak rate, including the calls that are easy to miss:
+
+- `assistant/message`: the conversation and its tool loop (one per step)
+- `compaction/summary`: **context compaction**. It is a real model call (a typical one reads ~140k cached tokens and writes ~3.5k, ≈ ¥0.017) whose log entry has usage but no turn; it therefore counts toward the day and workspace totals and **never** toward "last prompt"
+
+The only things not counted are auxiliary calls the log records **without usage**: session-title generation (`session/title-llm-request`, ~200 tokens each, 36 in 30 days, well under 0.01%) — unrecoverable from local files and inside the estimate's error budget.
+
 ### Search calls (estimated)
 
-Every **query** of a `web_search` call is a separate auxiliary model call (`@deepseek-ai/dsh-web-search-deepseek`, `deepseek-v4-flash` by default, up to `maxUses` per request). The session log records only the pre-dispatch `web/deepseek-search-llm-request` event — **no usage field** — so the real token counts exist in no local file.
+Every **query** of a `web_search` call is a separate auxiliary model call (`@deepseek-ai/dsh-web-search-deepseek`, using the Messages API's `web_search_20250305` server tool, `deepseek-v4-flash` by default, up to `maxUses` per request). The session log records only the pre-dispatch `web/deepseek-search-llm-request` event — **no usage field** — so the real token counts exist in no local file.
 
 The plugin therefore counts requests × a calibrated constant: ~6k cache-miss input + ~2k output tokens per search, i.e. **¥0.014** off-peak and **¥0.028** at peak (calibrated 2026-09-22 against the balance delta: 14 searches measured **¥0.0133 each**). Searches are attributed to the session, workspace and day they belong to, but each amount is an estimate (±30% order).
+
+**The Search API is billed per request.** From **2026-11-01 00:00 Beijing time** the official page charges Search / Fetch per successful request at ¥5 per 1,000 (¥0.005 each); before that date those calls are free. The plugin adds **¥0.005 per search request** from that instant on. The log records the request but not how many server-side searches actually ran (bounded by `max_uses`), so the estimate assumes one search per query (a lower bound). `web_fetch` uses a local HTTP fetch (`dsh-web-fetch-http`) and never reaches the official Fetch API, so it is not billed.
 
 ## Security & permission boundaries
 
@@ -191,6 +202,13 @@ This section is for the DSH Store / plugin audit: dependencies, runtime permissi
 - All costs are estimates; the provider's bill is authoritative
 
 ## Changelog
+
+### v0.6.4 — calculation audit: context compaction is now priced, and the Search API's per-request fee is modelled
+- 🐛 **Fixed**: `compaction/summary` (context compaction) carried usage but was **never priced**. It is a real model call (a typical one reads ~140k cached tokens and writes ~3.5k, ≈ **¥0.017**); 37 of them in the last 30 days came to about **0.64%** of conversation cost. They now count toward day and workspace totals at the official peak/off-peak rate, and — having no turn — **never** toward "last prompt"
+- 💰 **New billing item**: from **2026-11-01 00:00 Beijing time** the official page charges Search / Fetch per successful request at **¥5 per 1,000** (¥0.005 each); before that they are free. The plugin adds **¥0.005** to every `web_search` after that instant (the log records the request, not how many server-side searches ran, so it assumes one search per query — a lower bound). `web_fetch` uses a local HTTP fetch and never touches the official Fetch API
+- ✅ **Everything else checked out**: an independent script recomputed today's cost from the raw logs and matched the plugin **bit for bit** (`0.61913696` either way); rates match the official page with `pricingSource: synced`; `totalTokens = input + output + cacheRead` holds for **925/925** usage events; the holiday/peak/window rules pass their regression cases
+- ℹ️ **Known and deliberately not modelled**: session-title generation (`session/title-llm-request`, no usage in the log, under 0.01%); Pro rates do not auto-sync from the page (currently identical to it); **the 2027 holiday table is not published yet**, so from 2027-01-01 the plugin falls back to the weekend-only rule
+- 🧪 **Verified**: 11 new fixture assertions (compaction counted for today but excluded from last prompt, a compaction-only session, search fees at 10-31 / 11-01 00:00 / 11-02, and the holiday regression)
 
 ### v0.6.3 — China's statutory holidays are now priced off-peak all day
 - 🐛 **Fixed**: the peak/off-peak check excluded weekends but **not China's statutory holidays**. The official rule is "Beijing time **Mon–Fri (China's statutory holidays excluded)** 09:00–12:00 and 14:00–18:00 are peak; everything else — weekends and statutory holidays all day — is off-peak", so a statutory holiday falling on a weekday was **priced at 2×**. Measured against the built-in 2026 arrangement: Spring Festival 2/18, Dragon Boat 6/19, Mid-Autumn 9/25 and National Day 10/1–10/7 were all mispriced as peak, doubling their cost
