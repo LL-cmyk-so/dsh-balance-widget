@@ -1,8 +1,11 @@
-# dsh-balance-widget bundle patch: inserts the dual-face plugin row into the
+# dsh-balance-widget-total bundle patch: inserts the dual-face plugin row into the
 # web profile roster. The row is a bare plugin by package name: the node half
 # (exports ".") runs in the host process and registers the balance/cost API
 # routes; the `dsh.client` declaration in package.json makes the browser half
 # (exports "./client", served at /plugins/<id>/client.js) load in the web GUI.
+#
+# Fork note: id and name MUST differ from upstream `dsh-balance-widget` so both
+# plugins can coexist (and so upgrading the upstream one never overwrites this).
 - insert:
-    - id: balance-widget
-      name: 'dsh-balance-widget'
+    - id: balance-widget-total
+      name: 'dsh-balance-widget-total'

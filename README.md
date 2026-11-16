@@ -1,3 +1,87 @@
+# dsh-balance-widget-total
+
+> **Fork of [LL-cmyk-so/dsh-balance-widget](https://github.com/LL-cmyk-so/dsh-balance-widget)** (MIT License)
+>
+> 本 fork 在上游 v0.6.4 基础上新增两项功能：
+> 1. **累计行** —— 侧边栏卡片第三行显示全时段累计费用与累计 token（例：`¥104.8655 · 227.0M tok`）
+> 2. **弹窗不透明** —— 详情弹窗改用 `color-mix` 半透明底 + `backdrop-filter: blur(18px)`，不再与背后历史对话文字重叠
+>
+> 原版请见上方链接。本 fork 与原作者无关，仅供个人使用与分享。
+
+---
+
+## 安装
+
+### 方式一：GitHub 源（推荐，零配置）
+
+```bash
+cd ~/.dsh/profiles/desktop
+pnpm add github:Torricelli0/dsh-balance-widget2.0
+```
+
+### 方式二：DSH 插件命令
+
+```bash
+dsh plugin --profile desktop add "github:Torricelli0/dsh-balance-widget2.0"
+```
+
+### 方式三：手动覆盖
+
+```bash
+git clone https://github.com/Torricelli0/dsh-balance-widget2.0.git /tmp/dshbw-total
+cp -R /tmp/dshbw-total/lib ~/.dsh/profiles/desktop/node_modules/dsh-balance-widget-total/
+cp /tmp/dshbw-total/package.json /tmp/dshbw-total/cordis.patch.yml \
+   ~/.dsh/profiles/desktop/node_modules/dsh-balance-widget-total/
+```
+
+装完重启 DSH 桌面端，侧边栏卡片会显示三行：`余额` / `今日` / `累计`。
+
+---
+
+## 与上游的差异
+
+| 项目 | 上游 v0.6.4 | 本 fork v0.7.0 |
+|---|---|---|
+| 包名 | `dsh-balance-widget` | `dsh-balance-widget-total` |
+| 插件 id | `balance-widget` | `balance-widget-total` |
+| 卡片行数 | 2 行（余额 / 今日） | **3 行**（余额 / 今日 / **累计**） |
+| 新增接口 | — | `GET /api/dsh-balance/total-cost` |
+| 弹窗背景 | `var(--dsw-alias-bg-layer-3)` | `color-mix(...)` + `backdrop-filter: blur(18px)` |
+| 代码改动 | — | index.js +64 行 / client.js +44 行 |
+
+### 为什么改包名
+
+DSH 按包名识别插件。若与上游同名，`pnpm update` 会用官方版覆盖本 fork 的改动。
+改名后两者可共存，也不会被上游更新冲掉。
+
+---
+
+## 累计功能实现说明
+
+后端 `lib/index.js` 新增：
+
+```js
+totalCost: "/api/dsh-balance/total-cost"
+```
+
+新增 `allTimeCost(sessionList)` 函数，遍历**全部** DSH 会话文件，按 `sampleCost` / `sampleTokens` 聚合全时段数据，返回：
+
+```js
+{ cost, inputTokens, outputTokens, tokens, samples }
+```
+
+前端 `lib/client.js` 通过 `TOTAL_COST_ROUTE` 拉取并在卡片第三行渲染。
+
+---
+
+## 许可证
+
+MIT，与上游一致。原版权归 dsh-balance-widget contributors。
+
+---
+
+## 以下为上游原始 README（保留供参考）
+
 # dsh-balance-widget
 
 **中文** | [English](https://github.com/LL-cmyk-so/dsh-balance-widget/blob/main/README.en.md)

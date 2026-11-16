@@ -1,7 +1,7 @@
 {
-  "name": "dsh-balance-widget",
-  "description": "Balance & cost widget for the DeepSeek Harness GUI (web and desktop app): a sidebar footer card shows the DeepSeek account balance and today's costs; clicking opens a popover with a five-tier cost breakdown (last prompt with session name / today-this-session / today-this-workspace / today-all-workspaces), peak/off-peak status tag, term explanations, and a one-click top-up link. Zero external dependencies — works on Node 24.",
-  "version": "0.6.4",
+  "name": "dsh-balance-widget-total",
+  "description": "DSH balance & cost widget with LIFETIME total cost. Fork of LL-cmyk-so/dsh-balance-widget: adds a 3rd row showing all-time accumulated cost and tokens, and makes the detail popover opaque with backdrop blur so it no longer overlaps chat text behind it.",
+  "version": "0.7.0",
   "type": "module",
   "main": "lib/index.js",
   "files": [
@@ -41,13 +41,20 @@
     "balance",
     "cost",
     "token",
-    "web-ui"
+    "web-ui",
+    "total",
+    "cumulative",
+    "lifetime"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LL-cmyk-so/dsh-balance-widget.git"
+    "url": "git+https://github.com/Torricelli0/dsh-balance-widget2.0.git"
   },
+  "bugs": {
+    "url": "https://github.com/Torricelli0/dsh-balance-widget2.0/issues"
+  },
+  "homepage": "https://github.com/Torricelli0/dsh-balance-widget2.0#readme",
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
